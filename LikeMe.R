@@ -1,3 +1,5 @@
+
+
 #Currently on GitHub.
 #Procedure:
 #- Pull the file from github.
@@ -308,10 +310,6 @@ jobboard<-function(skill1,skill2,skill3) {
   return(ddd)
 }
 
-
-
-
-
 ###########################################Content Based Search################################################
 manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Designation,skillcatergory,L3, L4,  Band,Sub_band, Personalsubarea){
   
@@ -334,7 +332,6 @@ manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Design
   len<-NROW(demanddata)
   demanddata$noofmatchesbyL2<-0
   demanddata$L2previousjobroles<-0
-  
   
   
   #demanddata$skill1<-0
@@ -469,9 +466,6 @@ manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Design
     a_dummy$no_of_searches[i]<-s
     
     #for addition
-    
-    
-    
     #for location
     if (d=="c%23"){location<- movie %>% html_node(".rbOpen:nth-child(6)") %>% html_text()
     }else{
@@ -568,9 +562,7 @@ manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Design
   BE<-BE[order(as.numeric(BE$nos),decreasing=TRUE),]
   BE<-head(BE,10)
   #write.csv(BE,file="head.csv")
-  
-  
-  
+
   a_dummy<-a_dummy[order(as.numeric(a_dummy$no_of_searches), decreasing = TRUE), ]
   a_dummy$no_of_searches<-as.numeric(a_dummy$no_of_searches)
   a_dummy$Market_availablity<-0
@@ -678,11 +670,7 @@ forecaster <- function(skill.input, country){
     write.csv(demand,"demand.csv")
     write.csv(demand, "dump.csv")  
   }
-  
-  
-  
-  
-  
+
   #########################################Cleaning Module##############################################
   #Load the master Demand Excel
   #Set Working directory to the folder where the data for the selected region is written.
