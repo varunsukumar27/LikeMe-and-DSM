@@ -1,4 +1,11 @@
 #Currently on GitHub.
+#Procedure:
+#- Pull the file from github.
+#- Open in R studio.
+#- Make the changes and save the file.
+#- Add summary and description to the changes made in GitHub. Commit Changes.
+#- Push the changes.
+
 setwd("C:/HCL/LikeMe")
 
 
