@@ -1,7 +1,11 @@
 setwd("C:/HCL/LikeMe")
 #I have changed here
 #New change
+<<<<<<< HEAD
 #Changes - Newmen
+=======
+#Newmen
+>>>>>>> 1044bf297e0ec831e5d8de0bb0d292573b71b596
 library(shiny)
 library(shinydashboard)
 library(quanteda, irlba)
