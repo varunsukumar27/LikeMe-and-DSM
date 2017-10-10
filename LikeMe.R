@@ -1332,6 +1332,46 @@ maps <- function(a,b,c){
   #spplot(USAsp['value'])
   
   print("End Maps")
+  
+  forecasting <- function(loca){
+    print(loca)
+    demand <- read.csv("dump.csv",stringsAsFactors = F)
+    demand$date <- dmy(demand$Req.Date)
+    demand$quarter <- quarter(demand$date)
+    demand$month <- month(demand$date)
+    demand$year <- year(demand$date)
+    demand$week <- week(demand$date)
+    
+    demand <- demand %>% filter(demand$country == "USA")
+    demand <- demand %>% filter(demand$Skill.Bucket == a)
+    
+    location.demand <- aggregate(demand$InitialDemand, by=list(demand$Personal.SubArea), FUN = sum)
+    location.demand <- location.demand[order(location.demand$x, decreasing = T),]
+    location.demand <- location.demand[1:3,]$Group.1
+    
+    demand <- demand %>% filter(tolower(demand$Personal.SubArea) == tolower(loca))
+    demand <- aggregate(demand$InitialDemand, by = list(demand$week, demand$year), FUN = sum)
+    colnames(demand) <- c("Week","Year","Demand")
+    
+    template <- read.csv("template2015.csv")
+    colnames(template) <- c("Year", "Week")
+    demand <- merge(template, demand, all = TRUE)
+    demand$Demand[is.na(demand$Demand)] <- 0
+    
+    demand.ts <- tsclean(ts(demand[1:52,]$Demand,frequency = 52))
+    plot(demand.ts)
+    #Acf(demand.ts)
+    #Pacf(demand.ts)
+    
+    return(round(sum(forecast(auto.arima(demand.ts),h=12)$mean[1:12])))
+    
+  }
+  
+  
+  
+  toplocation <- character(Total$State)
+  toplocation <- lapply(toplocation,function(x)forecasting(x))
+  Total$Forecast <- unlist(toplocation)
   return(Total)
   
   
