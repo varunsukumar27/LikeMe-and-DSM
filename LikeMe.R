@@ -3003,23 +3003,7 @@ server <- function(input, output, session) {
   })
   
   
-  output$pop.table <- DT::renderDataTable({
-    # specify some map projection/options
-    data.frame(data.popularity()[2])
-    
-  })
-  
-  output$top10losers <- DT::renderDataTable({
-    # specify some map projection/options
-    data.frame(data.popularity()[3])
-    
-  })
-  
-  output$top10gainers <- DT::renderDataTable({
-    # specify some map projection/options
-    data.frame(data.popularity()[4])
-    
-  })
+
   
   
   #Code to plot the map in DSM+.  
