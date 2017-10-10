@@ -628,6 +628,7 @@ manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Design
 ###########################################DSM+################################################################
 
 forecaster <- function(skill.input, country){
+  print("Forecasting first")
   
   #####################################File Information#################################################
   #Created using R version 3.4.1
@@ -1223,7 +1224,22 @@ forecaster <- function(skill.input, country){
 }
 
 #Create the data for maps for ploting data.
-maptable <- function(a,b,c){
+maptable <- function(a,b,c, country){
+  if(country=="India"){
+    setwd("C:/HCL/LikeMe") 
+    demand <- read.csv("dump2.csv", header = TRUE, stringsAsFactors = FALSE)
+    demand <- subset(demand, demand$country=="INDIA")
+    setwd("C:/HCL/LikeMe/Demand") 
+    write.csv(demand,"demand.csv")
+    write.csv(demand, "dump.csv")
+  }else{
+    setwd("C:/HCL/LikeMe") 
+    demand <- read.csv("dump2.csv", header = TRUE, stringsAsFactors = FALSE)
+    demand <- subset(demand, demand$country=="USA")
+    setwd("C:/HCL/LikeMe/Demand") 
+    write.csv(demand,"demand.csv")
+    write.csv(demand, "dump.csv")  
+  }
   #Set the working directory to the Demand folder.
   setwd("C:/HCL/LikeMe/Demand")
   master.demand <- read.csv("dump.csv")
@@ -1279,7 +1295,22 @@ maptable <- function(a,b,c){
   
 }
 
-maps <- function(a,b,c){
+maps <- function(a,b,c, country){
+  if(country=="India"){
+    setwd("C:/HCL/LikeMe") 
+    demand <- read.csv("dump2.csv", header = TRUE, stringsAsFactors = FALSE)
+    demand <- subset(demand, demand$country=="INDIA")
+    setwd("C:/HCL/LikeMe/Demand") 
+    write.csv(demand,"demand.csv")
+    write.csv(demand, "dump.csv")
+  }else{
+    setwd("C:/HCL/LikeMe") 
+    demand <- read.csv("dump2.csv", header = TRUE, stringsAsFactors = FALSE)
+    demand <- subset(demand, demand$country=="USA")
+    setwd("C:/HCL/LikeMe/Demand") 
+    write.csv(demand,"demand.csv")
+    write.csv(demand, "dump.csv")  
+  }
   setwd("C:/HCL/LikeMe/Demand")
   master.demand <- read.csv("dump.csv")
   print("Start Maps")
@@ -1335,6 +1366,7 @@ maps <- function(a,b,c){
   print("End Maps")
   
   forecasting <- function(loca){
+    setwd("C:/HCL/LikeMe/Demand")
     print(loca)
     demand <- read.csv("dump.csv",stringsAsFactors = F)
     
@@ -1345,9 +1377,10 @@ maps <- function(a,b,c){
     demand$week <- week(demand$date)
     
     dates <- demand
-    #demand <- demand %>% filter(demand$country == "USA")
+    #demand <- demand %>% filter(demand$country == "INDIA")
+    if(a!="All"){
     demand <- demand %>% filter(demand$Skill.Bucket == a)
-    
+    }
     location.demand <- aggregate(demand$InitialDemand, by=list(demand$Personal.SubArea), FUN = sum)
     location.demand <- location.demand[order(location.demand$x, decreasing = T),]
     location.demand <- location.demand[1:3,]$Group.1
@@ -1356,6 +1389,7 @@ maps <- function(a,b,c){
     demand <- aggregate(demand$InitialDemand, by = list(demand$week, demand$year), FUN = sum)
     colnames(demand) <- c("Week","Year","Demand")
     
+    setwd("C:/HCL/LikeMe")
     template <- read.csv("template2015.csv")
     colnames(template) <- c("Year", "Week")
     demand <- merge(template, demand, all = TRUE)
@@ -3001,8 +3035,8 @@ server <- function(input, output, session) {
   })
   
   data1 <- eventReactive(input$cust, {forecaster(input$custskill[1],input$custloc[1])})
-  data2 <- eventReactive(input$cust, {maps(input$custskill[1],input$custquarter[1],input$custyear[1])})
-  data3 <- eventReactive(input$cust, {maptable(input$custskill[1],input$custquarter[1],input$custyear[1])})
+  data2 <- eventReactive(input$cust, {maps(input$custskill[1],input$custquarter[1],input$custyear[1],input$custloc[1])})
+  data3 <- eventReactive(input$cust, {maptable(input$custskill[1],input$custquarter[1],input$custyear[1],input$custloc[1])})
   data4 <- eventReactive(input$go4, {newman(input$skilla[1], input$num, input$bucks, input$subarea, input$custa)})
   data5 <- eventReactive(input$go5,{manji(input$skills1,input$Experience, input$Customer, input$Job_family,input$Designation,input$Skill_category, input$L2, input$L3, input$Band, input$Sub_band, input$Personal_subarea)})
   data6 <- eventReactive(input$go6,{jobboard(input$kill1,input$kill2, input$kill3)})
