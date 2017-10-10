@@ -1,15 +1,4 @@
-
-
-#Currently on GitHub.
-#Procedure:
-#- Pull the file from github.
-#- Open in R studio.
-#- Make the changes and save the file.
-#- Add summary and description to the changes made in GitHub. Commit Changes.
-#- Push the changes.
-
 setwd("C:/HCL/LikeMe")
-
 
 library(shiny)
 library(shinydashboard)
@@ -154,7 +143,7 @@ jobboard<-function(skill1,skill2,skill3) {
     # loc2<-gsub("\\\n", "", loc1)
     # loc3<-unlist( strsplit(loc2,split=","))
     # loc3<-loc3[loc3!=""]
-    # loc4<-gsub("\\ÃÂÃÂÃÂÃÂ»", "", loc3)
+    # loc4<-gsub("\\ÃÂÃÂ»", "", loc3)
     # loc5<-trimws(loc4, which = c("both"))
     # loc6<- (gsub("([0-9]+).*$", "\\1", loc5))
     # loc7<-gsub("\\(", "", loc6)
@@ -189,7 +178,7 @@ jobboard<-function(skill1,skill2,skill3) {
     # company2<-gsub("[0-9]", ":", company1)
     # company3<-unlist( strsplit(company2,split=":"))
     # company4<-gsub("\\Company", "", company3)
-    # company4<-gsub("\\more ÃÂÃÂÃÂÃÂ»", "", company4)
+    # company4<-gsub("\\more ÃÂÃÂ»", "", company4)
     # company5<-gsub("\\)", "", company4)
     # company6<-gsub("\\(", "", company5)
     # company6<-company6[company6!=""]
@@ -310,6 +299,10 @@ jobboard<-function(skill1,skill2,skill3) {
   return(ddd)
 }
 
+
+
+
+
 ###########################################Content Based Search################################################
 manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Designation,skillcatergory,L3, L4,  Band,Sub_band, Personalsubarea){
   
@@ -332,6 +325,7 @@ manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Design
   len<-NROW(demanddata)
   demanddata$noofmatchesbyL2<-0
   demanddata$L2previousjobroles<-0
+  
   
   
   #demanddata$skill1<-0
@@ -466,6 +460,9 @@ manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Design
     a_dummy$no_of_searches[i]<-s
     
     #for addition
+    
+    
+    
     #for location
     if (d=="c%23"){location<- movie %>% html_node(".rbOpen:nth-child(6)") %>% html_text()
     }else{
@@ -474,7 +471,7 @@ manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Design
     loc2<-gsub("\\\n", "", loc1)
     loc3<-unlist( strsplit(loc2,split=","))
     loc3<-loc3[loc3!=""]
-    loc4<-gsub("\\ÃÂÃÂÃÂÃÂ»", "", loc3)
+    loc4<-gsub("\\ÃÂÃÂ»", "", loc3)
     loc5<-trimws(loc4, which = c("both"))
     loc6<- (gsub("([0-9]+).*$", "\\1", loc5))
     loc7<-gsub("\\(", "", loc6)
@@ -509,7 +506,7 @@ manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Design
     company2<-gsub("[0-9]", ":", company1)
     company3<-unlist( strsplit(company2,split=":"))
     company4<-gsub("\\Company", "", company3)
-    company4<-gsub("\\more ÃÂÃÂÃÂÃÂ»", "", company4)
+    company4<-gsub("\\more ÃÂÃÂ»", "", company4)
     company5<-gsub("\\)", "", company4)
     company6<-gsub("\\(", "", company5)
     company6<-company6[company6!=""]
@@ -562,7 +559,9 @@ manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Design
   BE<-BE[order(as.numeric(BE$nos),decreasing=TRUE),]
   BE<-head(BE,10)
   #write.csv(BE,file="head.csv")
-
+  
+  
+  
   a_dummy<-a_dummy[order(as.numeric(a_dummy$no_of_searches), decreasing = TRUE), ]
   a_dummy$no_of_searches<-as.numeric(a_dummy$no_of_searches)
   a_dummy$Market_availablity<-0
@@ -670,7 +669,11 @@ forecaster <- function(skill.input, country){
     write.csv(demand,"demand.csv")
     write.csv(demand, "dump.csv")  
   }
-
+  
+  
+  
+  
+  
   #########################################Cleaning Module##############################################
   #Load the master Demand Excel
   #Set Working directory to the folder where the data for the selected region is written.
@@ -2986,7 +2989,6 @@ server <- function(input, output, session) {
     )
   })
   
-  
   output$pop.plot <- renderPlotly({
     # specify some map projection/options
     External1 <- data.frame(data.popularity()[1])
@@ -3004,7 +3006,23 @@ server <- function(input, output, session) {
   })
   
   
-
+  output$pop.table <- DT::renderDataTable({
+    # specify some map projection/options
+    data.frame(data.popularity()[2])
+    
+  })
+  
+  output$top10losers <- DT::renderDataTable({
+    # specify some map projection/options
+    data.frame(data.popularity()[3])
+    
+  })
+  
+  output$top10gainers <- DT::renderDataTable({
+    # specify some map projection/options
+    data.frame(data.popularity()[4])
+    
+  })
   
   
   #Code to plot the map in DSM+.  
@@ -3176,4 +3194,3 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui = ui, server = server)
-
