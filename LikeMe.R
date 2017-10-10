@@ -1321,7 +1321,8 @@ maps <- function(a,b,c){
   Total <- data.frame(State = Total$Location, Demand = Total$Demand)
   Total <- subset(Total, Total$State != "district of columbia")
   Total <- Total[order(Total$Demand,decreasing = TRUE),]
-  Total <- Total[1:10,]
+  Total <- subset(Total, Total$Demand!=0)
+  Total <- Total[1:5,]
   #mapUSA <- map('state',  fill = TRUE,  plot = FALSE)
   #nms <- sapply(strsplit(mapUSA$names,  ':'),  function(x)x[1])
   #USApolygons <- map2SpatialPolygons(mapUSA,  IDs = nms,  CRS('+proj=longlat'))
@@ -1336,13 +1337,15 @@ maps <- function(a,b,c){
   forecasting <- function(loca){
     print(loca)
     demand <- read.csv("dump.csv",stringsAsFactors = F)
+    
     demand$date <- dmy(demand$Req.Date)
     demand$quarter <- quarter(demand$date)
     demand$month <- month(demand$date)
     demand$year <- year(demand$date)
     demand$week <- week(demand$date)
     
-    demand <- demand %>% filter(demand$country == "USA")
+    dates <- demand
+    #demand <- demand %>% filter(demand$country == "USA")
     demand <- demand %>% filter(demand$Skill.Bucket == a)
     
     location.demand <- aggregate(demand$InitialDemand, by=list(demand$Personal.SubArea), FUN = sum)
@@ -1358,7 +1361,26 @@ maps <- function(a,b,c){
     demand <- merge(template, demand, all = TRUE)
     demand$Demand[is.na(demand$Demand)] <- 0
     
-    demand.ts <- tsclean(ts(demand[1:52,]$Demand,frequency = 52))
+    if(month(max(dates$date)) %in% c(1,2,3)){
+      n <- length(unique(dates$year))-1
+      n <- n*52
+      demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = n))
+    }
+    if(month(max(dates$date)) %in% c(4,5,6)){
+      n <- length(unique(dates$year))-1
+      n <- (n*52)+13
+      demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
+    }
+    if(month(max(dates$date)) %in% c(7,8,9)){
+      n <- length(unique(dates$year))-1
+      n <- (n*52)+26
+      demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
+    }
+    if(month(max(dates$date)) %in% c(10,11,12)){
+      n <- length(unique(dates$year))-1
+      n <- (n*52)+38
+      demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
+    }
     plot(demand.ts)
     #Acf(demand.ts)
     #Pacf(demand.ts)
@@ -1371,7 +1393,7 @@ maps <- function(a,b,c){
   
   toplocation <- Total$State
   toplocation <- lapply(toplocation,function(x)forecasting(x))
-  Total$Forecast <- unlist(toplocation)
+  Total$'Forecast for Next Quarter' <- unlist(toplocation)
   return(Total)
   
   
