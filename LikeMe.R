@@ -1369,7 +1369,7 @@ maps <- function(a,b,c){
   
   
   
-  toplocation <- character(Total$State)
+  toplocation <- Total$State
   toplocation <- lapply(toplocation,function(x)forecasting(x))
   Total$Forecast <- unlist(toplocation)
   return(Total)
