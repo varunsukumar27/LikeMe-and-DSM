@@ -26,6 +26,7 @@ library(radarchart)
 library(fmsb)
 library(DT)
 
+
 demand <- read.csv("demand.csv", stringsAsFactors = FALSE)
 demand.dump <- read.csv("dump2.csv", stringsAsFactors = FALSE)
 finaltokens <- read.csv("skillnames.csv")
@@ -33,20 +34,35 @@ datasetexp<-read.csv("excel1.csv", stringsAsFactors = FALSE)
 twm <- read.csv("twm.csv", stringsAsFactors = FALSE)
 refer<-read.csv("reference.csv ")
 colors <- c('#4AC6B7', '#2457C5', '#DF0B0B',"#24C547", '#E71BB6')
-uniquename<-read.csv("uniquenames.csv")
-demandda<-read.csv("demand1.csv")
-customer<-as.data.frame (unique(uniquename$Customer))
+#uniquename<-read.csv("uniquenames.csv") # 1st Data delete
+#demandda<-read.csv("demand1.csv") #2nd data delete
+indiadistance<-read.csv("indaiusa Distance1.csv")
+demandda<-demand.dump
+alternatives<-read.csv("alternatives.csv")
+rowman<-read.csv("ronnames chan1.csv")
+row.names(indiadistance)<-rowman$actual
+colnames(indiadistance)<-rowman$actual
+
+#customer<-as.data.frame (unique(uniquename$Customer))
+customer<-as.data.frame(unique(demandda$Customer))
 names(customer)<-"customer" 
-skillname<-read.csv("downlo2.csv")
-dd<-read.csv("trn2.csv",header= FALSE)
-skillname<-read.csv("downlo2.csv")
+
+#skillname<-read.csv("downlo2.csv") #3rd data delete
+#dd<-read.csv("trn2.csv",header= FALSE)  #4th Data delete
+#skillname<-read.csv("downlo2.csv") 
+dd<-read.csv("consolidated_skills1.csv", stringsAsFactors = FALSE)
+colnames(dd)<-rowman$actual
+
+
 dd1<-dd
 dd1$customer<-demandda$Customer
-colnames(dd1)<-skillname$Skill.names
-skill<-skillname$Skill.names
+#colnames(dd1)<-skillname$Skill.names
+skill<-colnames(dd)
 tdd<- t(dd)
-tdddataframe<-data.frame(tdd)
-row.names(tdddataframe)<-skillname$Skill.names
+tdddataframe<-data.frame(tdd,stringsAsFactors=FALSE)
+#row.names(tdddataframe)<-skillname$Skill.names
+tdd1<-tdddataframe
+
 tech<-read.csv("techie.csv")
 
 cons <- read.csv("Consolidated.csv", stringsAsFactors = F)
@@ -1405,13 +1421,28 @@ customer <- function(cid, year, quarter, number){
   
 }
 
-##################################################Dendrogram##########################################
+##################################################Newmancodes##########################################
 
-customer<-function(input, n){
+list_customer<- function (customer){
+  
+  if (customer!=""){
+    f<- as.data.frame( dd1[dd1$customer==customer,-1])
+    d<-f[, colSums(f != 0) > 0]
+    skill_list<-colnames(d) }
+  
+  else {
+    skill_list<-c("",as.character(unique(colnames(dd1))))  
+  }
+  
+  return(skill_list)  
+  
+}
+
+customer<-function(input){
   print ("customer function")
-  dd1<-dd
-  colnames(dd1) <-skillname$Skill.names
-  dd1$customer<-demandda$Customer
+  #dd1<-dd
+  #colnames(dd1) <-skillname$Skill.names
+  #dd1$customer<-demandda$Customer
   datafra<-as.data.frame( tapply(dd1[,input],dd1$customer, sum))
   names(datafra)<-"total"
   datafra$custo<-row.names(datafra)
@@ -1423,10 +1454,10 @@ customer<-function(input, n){
   plot_ly(data=plo,x = as.factor(plo$custo), y = plo$total,name = "SF Zoo",type = "bar")%>%layout(xaxis = xform)
   print ("customer function complete")
   return(plo)                        
-}       
+}
 
 newman<-function(input, n, skillbucket, subarea,customer){
-  #setwd("C:\\Users\\Newman\\Documents\\Final demo")
+  setwd("C:\\Users\\Newman\\Documents\\Final demo")
   print("loading datafile")
   
   # Data_for<-read.csv("excel.csv")
@@ -1441,16 +1472,23 @@ newman<-function(input, n, skillbucket, subarea,customer){
     A<-which(demandda$Customer == customer)}
   B<-1:nrow(demandda)
   if (subarea!=""){
-    B<-which(demandda$Area == subarea)}
+    B<-which(demandda$Personal.SubArea == subarea)}
   C<-1:nrow(demandda)
-  if (skillbucket!="") {
-    C<-which(demandda$Skill.Bucket==skillbucket)}
+  #if (skillbucket!="") {
+  #C<-which(demandda$Skill.Bucket==skillbucket)}
   
   D<-intersect(A,B)
   E<-intersect(D,C)
-  tdddataframe<-tdddataframe[,E]  
-  #distmatrix<-read.csv("skillsdf.csv", header= FALSE)
+  tdddataframe<-as.data.frame(tdddataframe[,E])
+  row.names(tdddataframe)<-skill
+  #test<- cbind(tdddataframe[,E],zerovector)
   
+  no<-length(tdddataframe)+1
+  tdddataframe[,no]<-0
+  d<- tdddataframe[input,]
+  coun<-d[, colSums(d == 0)== 0]
+  freq<- length(coun)
+  #distmatrix<-read.csv("skillsdf.csv", header= FALSE)
   print("loading complete")
   #skillMatrix<-read.csv("mac.csv")
   # asasa<-tdddataframe["java",]
@@ -1466,15 +1504,24 @@ newman<-function(input, n, skillbucket, subarea,customer){
   # names(Mat)
   #skillsnames<-read.csv("skillnames.csv")
   #skills<-as.character(skillsnames$skill_names)
-  dist <- function(x) ((1-cor(t(x)))/2)
+  dista <- function(x) ((1-cor(t(x)))/2)
   #row.names(skillMatrix)<-skills
+  jd<-length(tdddataframe)-1
+  
+  if (jd==31049){
+    
+    print("using India Distance")
+    distmatrix<-indiadistance
+  }
+  else {
+    d1 <- dista(tdddataframe)
+    distmatrix<-as.data.frame(d1)    
+  }
   
   
   
-  d1 <- dist(tdddataframe)
-  distmatrix<-as.data.frame(d1)
-  row.names(distmatrix)<-skillname$Skill.names
-  colnames(distmatrix)<-skillname$Skill.names
+  #row.names(distmatrix)<-skillname$Skill.names
+  #colnames(distmatrix)<-skillname$Skill.names
   print("Creating a single column of skill")
   Skills_new<-as.data.frame(distmatrix[,input])
   str(Skills_new)
@@ -1502,7 +1549,7 @@ newman<-function(input, n, skillbucket, subarea,customer){
   #radarchart(tra)
   
   # ggplot(data2,aes(x=skills, y=dist))+geom_bar(stat = "identity")
-  #  ?ggplot
+  # ?ggplot
   # 
   # ggplot(data2, aes(x=skills, y=dist)) +   # Fill column
   #   geom_bar(stat = "identity", width = .6) +coord_flip()   # draw the bars
@@ -1529,8 +1576,28 @@ newman<-function(input, n, skillbucket, subarea,customer){
   #d3 <- dist(reduced.dataframe)
   #d3<-as.dist(d3)
   #fit <- hclust(d3)
-  return(tra)
+  return(list(tra, jd, freq))
+}
+
+alter<-function (name){
   
+  return(alternatives$alternate[alternatives$Skillname==name])
+}
+
+defin<-function (name){
+  
+  return(alternatives$definition[alternatives$Skillname==name])
+}
+
+
+
+
+
+#plot(fit, main = "Dendrogram of Complete Linkage" )
+search <- function(keyword){
+  keyword <- gsub(" ","_",keyword, fixed = TRUE)
+  url <- paste("https://en.wikipedia.org/wiki/",keyword, sep = "")
+  return(url)
 }
 
 
@@ -2370,11 +2437,7 @@ candidate_recommendation <- function(j){
   return(demand)
 }
 ##########################################Wikipedia Search#################################
-search <- function(keyword){
-  keyword <- gsub(" ","_",keyword, fixed = TRUE)
-  url <- paste("https://en.wikipedia.org/wiki/",keyword, sep = "")
-  return(url)
-}
+
 ################################################Clue#############################################
 
 clue<- function(skillword){
@@ -2528,14 +2591,13 @@ ui <- dashboardPage(#skin = "blue",
                               status = "danger",
                               solidHeader = TRUE,
                               collapsible = TRUE,
-                              selectInput("skilla","Select Skill",
-                                          choices = unique(skillname$Skill.names)),
-                              selectInput("bucks","Select Skill Bucket",choices = unique(uniquename$Skill.Bucket)),
-                              selectInput("custa","Select Customer",choices = unique(uniquename$Customer)),  
-                              selectInput("subarea","Select Location",choices = unique(uniquename$Area)),   
-                              sliderInput(inputId = "num", label = "Choose a number", value = 20, min=1, max = 50),
-                              actionButton(inputId = "go4", label = "Radar", color = "red")
-                              
+                              uiOutput("Box1"),
+                              uiOutput("Box3"),
+                              uiOutput("Box4"),
+                              uiOutput("Box5"),
+                              uiOutput("Box6"),
+                              uiOutput("Box7"),
+                              valueBoxOutput("frequency")
                               
                               
                             ),
@@ -2561,13 +2623,7 @@ ui <- dashboardPage(#skin = "blue",
                               collapsible = TRUE,
                               plotlyOutput("skills2")
                             ),
-                            box(
-                              title = "Search Wikipedia",
-                              status = "danger",
-                              solidHeader = TRUE,
-                              collapsible = TRUE,
-                              tableOutput("links")
-                            )
+                            mainPanel( dataTableOutput("links"))
                             
                             
                           )),
@@ -2606,14 +2662,14 @@ ui <- dashboardPage(#skin = "blue",
                               radioButtons("stype","Select type of Search", c("Search for Candidates outside HCL" = "eser", "Search for Candidates within HCL" = "iser")),
                               textAreaInput("ski.ll", "Enter Skills*"),
                               tags$h3("OR"),
-                              selectInput("sk.ill", "Select the skill*", choices = c("I have already entered the skills",as.character(unique(skillname$Skill.names)))),
+                              selectInput("sk.ill", "Select the skill*", choices = c("I have already entered the skills",as.character(unique(rowman$actual)))),
                               sliderInput(inputId = "num1", label = "Select the maximum number of skills to be selected", value = 6, min=1, max = 50),
                               textAreaInput("job", "Context"),
                               textAreaInput("functional", "What are the functional requirements?"),
                               textAreaInput("systems", "What are the system requirements?"),
                               #textAreaInput("composition", "What are the composition requirements?"),
                               selectInput("exp", "Experience", choices = c("No Preference",unique(datasetexp$experience)[c(1:6,8)])),
-                              selectInput("clack","Select Customer",choices = unique(uniquename$Customer)),
+                              selectInput("clack","Select Customer",choices = unique(demandda$Customer)),
                               actionButton(inputId = "go", label = "Find Profiles")
                             ),
                             
@@ -2970,6 +3026,44 @@ popularity <- function(country,cust, skillbucket){
 
 server <- function(input, output, session) {
   
+  
+  output$Box1 = renderUI(selectInput("custa","Select Customer",choices = c("",as.character( unique(demandda$Customer)))))
+  
+  #output$Box2 = renderUI(selectInput("skilla","Select Skill",  choices = c("",skill_list)))
+  
+  #"skilla","Select Skill",  choices = c("",skill_list))
+  
+  output$Box3 = renderUI(
+    # if (is.null(input$custa) || input$custa == ""){return()
+    #}else 
+    selectInput("skilla", 
+                "Select Skill", 
+                choices = c("", list_customer(input$custa))
+    ))
+  
+  output$Box4 = renderUI(
+    # if (is.null(input$custa) || input$custa == ""){return()
+    #}else 
+    selectInput("bucks","Select Skill Bucket",choices = c( "",as.character(unique(colnames(dd1)))))
+  )
+  
+  output$Box5 = renderUI(
+    # if (is.null(input$custa) || input$custa == ""){return()
+    #}else 
+    selectInput("subarea","Select Location",choices = c("",as.character(unique(demandda$Personal.SubArea))))
+  )
+  
+  output$Box6 = renderUI(
+    # if (is.null(input$custa) || input$custa == ""){return()
+    #}else 
+    sliderInput(inputId = "num", label = "Choose a number", value = 20, min=1, max = 50)
+  )
+  
+  output$Box7 = renderUI(
+    # if (is.null(input$custa) || input$custa == ""){return()
+    #}else 
+    actionButton(inputId = "go4", label = "Radar", color = "red")  )
+  
   #Store the data that is returned after the respective functions are called
   data <- eventReactive(input$go, {likeme(input$ski.ll[1], input$job[1], input$exp[1], input$stype[1], input$sk.ill[1], input$num1[1], input$clack[1],input$functional[1],
                                           input$systems[1])})
@@ -3101,9 +3195,18 @@ server <- function(input, output, session) {
   })
   
   #Displays a table with skills separated with commas.
-  output$links<- renderTable({
+  output$links<-  DT::renderDataTable({
     #data4()
-    data.frame(Skill = colnames(data4()),Domain=unlist(lapply(colnames(data4()), function (x) {clue(x)})), link= unlist(lapply(colnames(data4()), function (x) {search(x)})))  
+    datatable((data.frame(Skill = colnames(data.frame(data4()[1], check.names =FALSE )),
+                          alternativess= unlist(lapply(colnames(data.frame(data4()[1], check.names = FALSE)), function (x) {alter(x)})),Definitions = unlist(lapply(colnames(data.frame(data4()[1], check.names = FALSE)), function (x) {defin(x)})))), options = list(columnDefs = list(list(
+                            targets = 3,
+                            render = JS(
+                              "function(data, type, row, meta) {",
+                              "return type === 'display' && data.length > 400 ?",
+                              "'<span title=\"' + data + '\">' + data.substr(0, 400) + '...</span>' : data;",
+                              "}")
+                          ))), callback = JS('table.page(3).draw(false);'))
+    
   })
   
   #Displays a box with the Overall demand for the quarter and year selected.
@@ -3210,7 +3313,7 @@ server <- function(input, output, session) {
   })
   
   output$skills <- renderPlot({
-    radarchart(data4(),pcol = "red")
+    radarchart(data.frame(data4()[1], check.names = FALSE),pcol = "red")
   })
   
   output$skills2 <- renderPlotly({
@@ -3220,8 +3323,16 @@ server <- function(input, output, session) {
   })
   
   output$skills3 <- renderTable({
-    data.frame(Boolean=paste(colnames(data4()),collapse = ","))
+    data.frame(Boolean=paste(colnames(data.frame(data4()[1])),collapse = ","))
   })
+  #newmanvalue box like e radar
+  output$frequency <- renderValueBox({
+    valueBox(
+      paste0(unlist(data4()[3])), "Job Descriptions with the Selected skill", icon = icon("list"),
+      color = "purple"
+    )
+  })
+  
   
   output$results1 <- DT::renderDataTable({
     data5()
