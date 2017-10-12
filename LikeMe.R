@@ -1438,6 +1438,39 @@ list_customer<- function (customer){
   
 }
 
+list_skillbucket<- function (customer){
+  
+  if (customer!=""){
+    
+    skill_list<-unique(demandda$Skill.Bucket[demandda$Customer==customer])
+  }
+  
+  else {
+    skill_list<-c("",as.character(unique(demandda$Skill.Bucket)))  
+  }
+  
+  return(skill_list)  
+  
+}
+
+
+list_location<- function (customer){
+  
+  if (customer!=""){
+    
+    skill_list<-unique(demandda$Personal.SubArea[demandda$Customer==customer])
+  }
+  
+  else {
+    skill_list<-c("",as.character(unique(demandda$Personal.SubArea)))  
+  }
+  
+  return(skill_list)  
+  
+}
+
+
+
 customer<-function(input){
   print ("customer function")
   #dd1<-dd
@@ -1474,8 +1507,8 @@ newman<-function(input, n, skillbucket, subarea,customer){
   if (subarea!=""){
     B<-which(demandda$Personal.SubArea == subarea)}
   C<-1:nrow(demandda)
-  #if (skillbucket!="") {
-  #C<-which(demandda$Skill.Bucket==skillbucket)}
+  if (skillbucket!="") {
+    C<-which(demandda$Skill.Bucket==skillbucket)}
   
   D<-intersect(A,B)
   E<-intersect(D,C)
@@ -3044,13 +3077,13 @@ server <- function(input, output, session) {
   output$Box4 = renderUI(
     # if (is.null(input$custa) || input$custa == ""){return()
     #}else 
-    selectInput("bucks","Select Skill Bucket",choices = c( "",as.character(unique(colnames(dd1)))))
+    selectInput("bucks","Select Skill Bucket",choices = c( "",list_skillbucket(input$custa)))
   )
   
   output$Box5 = renderUI(
     # if (is.null(input$custa) || input$custa == ""){return()
     #}else 
-    selectInput("subarea","Select Location",choices = c("",as.character(unique(demandda$Personal.SubArea))))
+    selectInput("subarea","Select Location",choices = c("",list_location(input$custa)))
   )
   
   output$Box6 = renderUI(
