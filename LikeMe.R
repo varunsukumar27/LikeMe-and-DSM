@@ -29,6 +29,9 @@ library(DT)
 
 demand <- read.csv("demand.csv", stringsAsFactors = FALSE)
 demand.dump <- read.csv("dump2.csv", stringsAsFactors = FALSE)
+demand.dump$quarter <- quarter(dmy(demand.dump$Approval.Date))
+demand.dump$year <- year(dmy(demand.dump$Approval.Date))
+demand.dump$month <- month(dmy(demand.dump$Approval.Date))
 finaltokens <- read.csv("skillnames.csv")
 datasetexp<-read.csv("excel1.csv", stringsAsFactors = FALSE)
 twm <- read.csv("twm.csv", stringsAsFactors = FALSE)
@@ -70,6 +73,131 @@ cons$date <- dmy(cons$Req.Date)
 cons$week <- quarter(cons$date)
 cons$year <- year(cons$date)
 dem <- cons
+
+############################################Combination Forecast############################################
+combopred <- function(a,b,c, country){    
+  if(country=="India"){
+    setwd("C:/HCL/LikeMe") 
+    demand <- read.csv("dump2.csv", header = TRUE, stringsAsFactors = FALSE)
+    demand <- subset(demand, demand$country=="INDIA")
+    setwd("C:/HCL/LikeMe/Demand") 
+    write.csv(demand,"demand.csv")
+    write.csv(demand, "dump.csv")
+  }else{
+    setwd("C:/HCL/LikeMe") 
+    demand <- read.csv("dump2.csv", header = TRUE, stringsAsFactors = FALSE)
+    demand <- subset(demand, demand$country=="USA")
+    setwd("C:/HCL/LikeMe/Demand") 
+    write.csv(demand,"demand.csv")
+    write.csv(demand, "dump.csv")  
+  }
+  
+  setwd("C:/HCL/LikeMe/Demand")
+  master.demand <- read.csv("dump.csv")
+  print("Start Maps")
+  demand.area <- master.demand
+  demand.area$date <- dmy(demand.area$Approval.Date)
+  demand.area$quarter <- quarter(dmy(demand.area$Approval.Date))
+  demand.area$year <- year(dmy(demand.area$Approval.Date))
+  demand.area$month <- month(dmy(demand.area$Approval.Date))
+  demand.area$week <- week(dmy(demand.area$Approval.Date))
+  dem <- demand.area
+  
+  if(a!="All"){
+    demand.location <- aggregate(demand.area$InitialDemand, by = list(demand.area$quarter,demand.area$year,demand.area$Skill.Bucket,demand.area$Personal.SubArea), FUN = sum)
+    colnames(demand.location) <- c("Quarter","Year", "Skill", "Location", "Demand")
+    demand.customer <- aggregate(demand.area$InitialDemand, by = list(demand.area$quarter,demand.area$year,demand.area$Skill.Bucket,demand.area$Customer), FUN = sum)
+    colnames(demand.customer) <- c("Quarter","Year", "Skill", "Customer", "Demand")
+  }else{
+    demand.location <- aggregate(demand.area$InitialDemand, by = list(demand.area$quarter,demand.area$year,demand.area$Skill.Bucket,demand.area$Personal.SubArea), FUN = sum)
+    colnames(demand.location) <- c("Quarter","Year", "Skill", "Location", "Demand")
+    demand.customer <- aggregate(demand.area$InitialDemand, by = list(demand.area$quarter,demand.area$year,demand.area$Skill.Bucket,demand.area$Customer), FUN = sum)
+    colnames(demand.customer) <- c("Quarter","Year", "Skill", "Customer", "Demand")
+  }
+  
+  demand.location$time <- paste("Q",demand.area$Quarter,"-",demand.area$Year)
+  demand.customer$time <- paste("Q",demand.area$Quarter,"-",demand.area$Year)
+  
+  
+  if(a!="All"){
+    Total.location <- subset(demand.location, Year == c & Quarter ==b & demand.location$Skill == a)
+    Total.location <- Total.location[order(Total.location$Demand, decreasing = T),]
+    Total.location <- Total.location$Location[1:5]
+    Total.customer <- subset(demand.customer, Year == c & Quarter ==b & demand.customer$Skill == a)
+    Total.customer <- Total.customer[order(Total.customer$Demand, decreasing = T),]
+    Total.customer <- Total.customer$Customer[1:5]
+  }else{
+    Total.location <- subset(demand.location, Year == c & Quarter ==b)
+    Total.location <- Total.location[order(Total.location$Demand, decreasing = T),]
+    Total.location <- Total.location$Location[1:5]
+    Total.customer <- subset(demand.customer, Year == c & Quarter ==b)
+    Total.customer <- Total.customer[order(Total.customer$Demand, decreasing = T),]
+    Total.customer <- Total.customer$Customer[1:5]
+  }
+  print(Total.customer)
+  print(Total.location)
+  grid <- expand.grid(Total.location, Total.customer)
+  print(grid)
+  colnames(grid) <- c("Location","Customer")
+  
+  combination.forecasting<-function(Locat,Custo){
+    demand <- dem
+    dates <- dem
+    
+    if(a!="All"){
+      demand <- subset(demand, demand$Skill.Bucket==a)
+    }
+    demand <- subset(demand, demand$Personal.SubArea==Locat)
+    demand <- subset(demand, demand$Customer==Custo)
+    if(nrow(demand)==0){
+      return("No Such Combination")
+    }else{
+      demand <- aggregate(demand$InitialDemand, by = list(demand$week, demand$year), FUN =sum)
+      colnames(demand) <- c("Week","Year","Demand")
+      setwd("C:/HCL/LikeMe")
+      template <- read.csv("template2015.csv")
+      colnames(template) <- c("Year", "Week")
+      demand <- merge(template, demand, all = TRUE)
+      demand$Demand[is.na(demand$Demand)] <- 0
+      
+      if(month(max(dates$date)) %in% c(1,2,3)){
+        n <- length(unique(dates$year))-1
+        n <- n*52
+        demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = n))
+      }
+      if(month(max(dates$date)) %in% c(4,5,6)){
+        n <- length(unique(dates$year))-1
+        n <- (n*52)+13
+        demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
+      }
+      if(month(max(dates$date)) %in% c(7,8,9)){
+        n <- length(unique(dates$year))-1
+        n <- (n*52)+26
+        demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
+      }
+      if(month(max(dates$date)) %in% c(10,11,12)){
+        n <- length(unique(dates$year))-1
+        n <- (n*52)+38
+        demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
+      }
+      if(round(sum(forecast(auto.arima(demand.ts),h=12)$mean[1:12]))<0){
+        return("Not Predictable")
+      }else{
+        return(round(sum(forecast(auto.arima(demand.ts),h=12)$mean[1:12])))
+      }
+      
+    }
+    
+  }
+  if(a!="All"){
+    Total <- data.frame(Skill = rep(a,nrow(grid)), grid, Forecast = mapply(combination.forecasting, grid$Location, grid$Customer))
+    Total <- subset(Total, Total$Forecast != "No Such Combination")
+    Total <- subset(Total, Total$Customer != "Others")
+  }else{
+    Total <- data.frame(No_Skill_Selected = "No Skill Selected so the predictions cannot be made for Customer and Location combinations if a Skill was not selected")
+  }
+  return(Total)
+}    
 
 ##############################################Keyword Search############################################
 jobboard<-function(skill1,skill2,skill3) {
@@ -1402,6 +1530,9 @@ maps <- function(a,b,c, country){
     location.demand <- location.demand[1:3,]$Group.1
     
     demand <- demand %>% filter(tolower(demand$Personal.SubArea) == tolower(loca))
+    if(nrow(demand)==0){
+      return("No forecast available.")
+    }else{
     demand <- aggregate(demand$InitialDemand, by = list(demand$week, demand$year), FUN = sum)
     colnames(demand) <- c("Week","Year","Demand")
     
@@ -1436,6 +1567,7 @@ maps <- function(a,b,c, country){
     #Pacf(demand.ts)
     
     return(round(sum(forecast(auto.arima(demand.ts),h=12)$mean[1:12])))
+    }
     
   }
   
@@ -2785,9 +2917,12 @@ ui <- dashboardPage(#skin = "blue",
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         radioButtons("custloc","Select region", c("India" = "India", "USA" = "USA")),
-                        selectInput("custskill","Select Skill",choices = c("All",sort(unique(demand$Skill.Bucket)))), 
-                        selectInput("custyear","Select Year",choices = c(2014,2015,2016,2017)), 
-                        selectInput("custquarter","Select Quarter",choices = c(1,2,3,4)),
+                        uiOutput("forecast.skill"),
+                        uiOutput("forecast.year"),
+                        uiOutput("forecast.quarter"),
+                        #selectInput("custskill","Select Skill",choices = c("All",sort(unique(demand$Skill.Bucket)))), 
+                        #selectInput("custyear","Select Year",choices = c(2014,2015,2016,2017)), 
+                        #selectInput("custquarter","Select Quarter",choices = c(1,2,3,4)),
                         actionButton(inputId = "cust", label = "GO", color = "red")
                       ),
                       box(
@@ -2830,6 +2965,23 @@ ui <- dashboardPage(#skin = "blue",
                         collapsible = TRUE,
                         collapsed = FALSE,
                         plotlyOutput("ful.cust")
+                        
+                      )
+                    ),
+                    fluidRow(
+                      box(title = "Forecast for Combination of Top Skills and Top Customers for the selected skills",
+                          status = "danger",
+                          solidHeader = TRUE,
+                          collapsible = TRUE,
+                          DT::dataTableOutput("combforecast")
+                          ),
+                      box(
+                        title = "Forecast for the top customers for the selected skill",
+                        status = "danger",
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        collapsed = FALSE,
+                        DT::dataTableOutput("custforecast")
                         
                       )
                     )
@@ -3161,21 +3313,32 @@ server <- function(input, output, session) {
     data()
   })
   
-  data1 <- eventReactive(input$cust, {forecaster(input$custskill[1],input$custloc[1])})
-  data2 <- eventReactive(input$cust, {maps(input$custskill[1],input$custquarter[1],input$custyear[1],input$custloc[1])})
-  data3 <- eventReactive(input$cust, {maptable(input$custskill[1],input$custquarter[1],input$custyear[1],input$custloc[1])})
+  data1 <- eventReactive(input$cust, {forecaster(input$forecast.ss[1],input$custloc[1])})
+  data2 <- eventReactive(input$cust, {maps(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
+  data3 <- eventReactive(input$cust, {maptable(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
   data4 <- eventReactive(input$go4, {newman(input$skilla[1], input$num, input$bucks, input$subarea, input$custa)})
   data5 <- eventReactive(input$go5,{manji(input$skills1,input$Experience, input$Customer, input$Job_family,input$Designation,input$Skill_category, input$L2, input$L3, input$Band, input$Sub_band, input$Personal_subarea)})
   data6 <- eventReactive(input$go6,{jobboard(input$kill1,input$kill2, input$kill3)})
-  data7 <- eventReactive(input$cust,{custskill1(input$custskill, input$custyear, input$custquarter)})
-  data8 <- eventReactive(input$cust,{tabs(input$custskill, input$custyear, input$custquarter)})
+  data7 <- eventReactive(input$cust,{custskill1(input$forecast.ss, input$forecast.yy, input$forecast.qq)})
+  data8 <- eventReactive(input$cust,{tabs(input$forecast.ss, input$forecast.yy, input$forecast.qq)})
   recodata <- eventReactive(input$recogo, {candidate_recommendation(input$recoskill)})
   data9 <- eventReactive(input$go4,{customer(input$skilla[1])})
-  data10 <- eventReactive(input$cust,{fulfillment.customer(input$custskill[1])})
-  data11 <- eventReactive(input$cust,{fulfillment.location(input$custskill[1])})
+  data10 <- eventReactive(input$cust,{fulfillment.customer(input$forecast.ss[1])})
+  data11 <- eventReactive(input$cust,{fulfillment.location(input$forecast.ss[1])})
   data.popularity <- eventReactive(input$popularity,{popularity(input$poploc,input$dynamic,input$dyna)})
+  data.combforecast <- eventReactive(input$cust,{combopred(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
+  #data.custforecast <- eventReactive(input$cust,{combopred(input$custskill[1],input$custquarter[1],input$custyear[1],input$custloc[1])})
+  
   #datawiki <- eventReactive(input$go4,{search(input$skilla[1])})
   #datawiki <- eventReactive(input$go4,{newman(input$skilla[1], input$num, input$bucks, input$subarea, input$custa)), function (x) {search(x)})})
+  output$combforecast <- DT::renderDataTable({
+    # specify some map projection/options
+    data.combforecast()
+    
+  })
+  
+  
+  
   output$recoresults <- DT::renderDataTable({
     recodata()
     #maptable(input$skill[1],input$quarter[1],input$year[1])
@@ -3204,9 +3367,30 @@ server <- function(input, output, session) {
     )
   })
   
+  output$forecast.skill <- renderUI({
+    selectInput("forecast.ss", "Select the Skill Bucket",
+                choices = unique(subset(demand.dump, tolower(demand.dump$country)==tolower(input$custloc))$Skill.Bucket),
+                selected = "option3"
+    )
+  })
+  
+  output$forecast.year <- renderUI({
+    selectInput("forecast.yy", "Select the Skill Bucket",
+                choices = unique(subset(demand.dump, tolower(demand.dump$country)==tolower(input$custloc) & tolower(demand.dump$Skill.Bucket)==tolower(input$forecast.ss))$year),
+                selected = "option3"
+    )
+  })
+  
+  output$forecast.quarter <- renderUI({
+    selectInput("forecast.qq", "Select the Skill Bucket",
+                choices = unique(subset(demand.dump, tolower(demand.dump$country)==tolower(input$custloc) & tolower(demand.dump$Skill.Bucket)==tolower(input$forecast.ss) & demand.dump$year == input$forecast.yy)$quarter),
+                selected = "option3"
+    )
+  })
+                  
   output$skill.varun <- renderUI({
     selectInput("dyna", "Select the Skill Bucket",
-                choices = unique(subset(subset(demand.dump, demand.dump$country==input$poploc),
+choices = unique(subset(subset(demand.dump, demand.dump$country==input$poploc),
                                         subset(demand.dump, demand.dump$country==input$poploc)$Customer==input$dynamic)$Skill.Bucket),
                 selected = "option3"
     )
