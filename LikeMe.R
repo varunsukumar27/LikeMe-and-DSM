@@ -1163,7 +1163,9 @@ forecaster <- function(skill.input, country){
         order <- read.csv("order.csv")
         order <- subset(order, order$skill == as.character(skills.list))
         
-        ovr.forecast <- forecast(arima(ovr.demandseries, order = c(order$a,0,order$b)), h = 12)
+        ovr.forecast <- tryCatch(forecast(arima(ovr.demandseries, order = c(order$a,0,order$b)), h = 12), 
+                 error = function(e) forecast(auto.arima(ovr.demandseries), h = 12))
+         
         #ovr.forecast <- forecast(auto.arima(ovr.demandseries), h = 12)
         #ext.forecast <- forecast(arima(ext.demandseries, order = c(order$c,0,order$d)), h = 12)
         #int.forecast <- forecast(arima(int.demandseries, order = c(order$e,0,order$f)), h = 12)
@@ -1344,27 +1346,28 @@ forecaster <- function(skill.input, country){
   ovrdemand.agg <- ovrdemand.agg[order(ovrdemand.agg$quarter),]
   ovrdemand.agg <- ovrdemand.agg[order(ovrdemand.agg$year),]
   
-  disp <- data.frame(quarter = ovrdemand.agg$quarter, year = ovrdemand.agg$year,Actual.Demand = ovrdemand.agg$overall, 
-                     Demand.Forecast = c(rep(0,nrow(subset(ovrdemand.agg,ovrdemand.agg$year==2016))),jfm$Demand[1:3]), 
-                     Fufillment = ovrdemand.agg$total, Ext.FUlfillment = ovrdemand.agg$external, 
-                     Int.Fulfillment = ovrdemand.agg$internal)
-  disp$Fulfillmet.perc <- round((disp$Fufillment/disp$Demand.Forecast)*100)
-  disp$Fulfillmet.perc[is.infinite(disp$Fulfillmet.perc)] <- "Data Not Available"
+  #disp <- data.frame(quarter = ovrdemand.agg$quarter, year = ovrdemand.agg$year,Actual.Demand = ovrdemand.agg$overall, 
+   #                  Demand.Forecast = c(rep(0,nrow(subset(ovrdemand.agg,ovrdemand.agg$year==2016))),jfm$Demand[1:3]), 
+    #                 Fufillment = ovrdemand.agg$total, Ext.FUlfillment = ovrdemand.agg$external, 
+     #                Int.Fulfillment = ovrdemand.agg$internal)
+  #disp$Fulfillmet.perc <- round((disp$Fufillment/disp$Demand.Forecast)*100)
+  #disp$Fulfillmet.perc[is.infinite(disp$Fulfillmet.perc)] <- "Data Not Available"
+  
   print("End Forecst")
   
-  disp$quarter[which(disp$quarter == 1)] <- "Q1 - JFM"
-  disp$quarter[which(disp$quarter == 2)] <- "Q2 - AMJ"
+  #disp$quarter[which(disp$quarter == 1)] <- "Q1 - JFM"
+  #disp$quarter[which(disp$quarter == 2)] <- "Q2 - AMJ"
   if(month(max(master.demand$date)) %in% c(1,2,3)){
-    disp$quarter[which(disp$quarter == 3)] <- "Q1 - JFM"
+    jfm$Quarter<- "Q1 - JFM"
   }else if(month(max(master.demand$date)) %in% c(4,5,6)){
-    disp$quarter[which(disp$quarter == 3)] <- "Q2 - AMJ"
+    jfm$Quarter <- "Q2 - AMJ"
   }else if(month(max(master.demand$date)) %in% c(7,8,9)){
-    disp$quarter[which(disp$quarter == 3)] <- "Q3 - JAS"
+    jfm$Quarter <- "Q3 - JAS"
   }else if(month(max(master.demand$date)) %in% c(10,11,12)){
-    disp$quarter[which(disp$quarter == 3)] <- "Q4 - OND"
+    jfm$Quarter <- "Q4 - OND"
   }
-  disp$quarter[which(disp$quarter == 4)] <- "Q4 - OND"
-  return(disp)
+  #disp$quarter[which(disp$quarter == 4)] <- "Q4 - OND"
+  return(jfm)
 }
 
 #Create the data for maps for ploting data.
@@ -1576,6 +1579,7 @@ maps <- function(a,b,c, country){
   toplocation <- Total$State
   toplocation <- lapply(toplocation,function(x)forecasting(x))
   Total$'Forecast for Next Quarter' <- unlist(toplocation)
+  Total <- subset(Total, !is.na(Total$Demand))
   return(Total)
   
   
@@ -3102,7 +3106,9 @@ fulfillment.customer <- function(skill){
   
   master.skill.initial$fulfillment <- (master.skill.filled$x/master.skill.initial$x)*100
   master.skill.initial <- master.skill.initial[order(master.skill.initial$fulfillment,decreasing = TRUE),]
+  if(nrow(master.skill.initial)>1){
   master.skill.initial <- subset(master.skill.initial, master.skill.initial$x > mean(master.skill.initial$x))
+  }
   master.skill.initial.customer <- aggregate(master.skill.initial$fulfillment, by = list(master.skill.initial$Group.1), FUN = mean)
   master.skill.initial.customer <- master.skill.initial.customer[order(master.skill.initial.customer$x,decreasing = TRUE),]
   #master.skill.initial.location <- aggregate(master.skill.initial$fulfillment, by = list(master.skill.initial$Group.2), FUN = mean)
@@ -3140,7 +3146,11 @@ fulfillment.location <- function(skill){
   
   master.skill.initial$fulfillment <- (master.skill.filled$x/master.skill.initial$x)*100
   master.skill.initial <- master.skill.initial[order(master.skill.initial$fulfillment,decreasing = TRUE),]
+  
+  if(nrow(master.skill.initial)>1){
   master.skill.initial <- subset(master.skill.initial, master.skill.initial$x > mean(master.skill.initial$x))
+  }
+  
   master.skill.initial.customer <- aggregate(master.skill.initial$fulfillment, by = list(master.skill.initial$Group.2), FUN = mean)
   master.skill.initial.customer <- master.skill.initial.customer[order(master.skill.initial.customer$x,decreasing = TRUE),]
   # master.skill.initial.location <- aggregate(master.skill.initial$fulfillment, by = list(master.skill.initial$Group.2), FUN = mean)
@@ -3517,14 +3527,14 @@ choices = unique(subset(subset(demand.dump, demand.dump$country==input$poploc),
   #Displays a box with the Forecast for the next quarter.
   output$frcst <- renderValueBox({
     valueBox(
-      paste0(data1()$Demand.Forecast[nrow(data1())]), paste0(data1()$quarter[nrow(data1())],"-",data1()$year[nrow(data1())],"Forecast"), icon = icon("line-chart"),
+      data1()[3,]$Demand, paste0(data1()[3,]$Quarter," ","Forecast"), icon = icon("line-chart"),
       color = "blue"
     )
   })
   
   output$revenue <- renderValueBox({
     valueBox(
-      paste0("$",data1()$Demand.Forecast[nrow(data1())]*65*2080), paste0(data1()$quarter[nrow(data1())],"-",data1()$year[nrow(data1())],"Revenue"), icon = icon("dollar"),
+      paste0("$",data1()[3,]$Demand*65*2080), paste0(data1()$quarter[nrow(data1())],"-",data1()$year[nrow(data1())],"Revenue"), icon = icon("dollar"),
       color = "green"
     )
   })
