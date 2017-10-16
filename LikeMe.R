@@ -1,5 +1,7 @@
 setwd("C:/HCL/LikeMe")
-#Newmen
+
+
+
 library(shiny)
 library(shinydashboard)
 library(quanteda, irlba)
