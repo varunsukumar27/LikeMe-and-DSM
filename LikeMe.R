@@ -3385,14 +3385,14 @@ server <- function(input, output, session) {
   })
   
   output$forecast.year <- renderUI({
-    selectInput("forecast.yy", "Select the Skill Bucket",
+    selectInput("forecast.yy", "Select the Year",
                 choices = unique(subset(demand.dump, tolower(demand.dump$country)==tolower(input$custloc) & tolower(demand.dump$Skill.Bucket)==tolower(input$forecast.ss))$year),
                 selected = "option3"
     )
   })
   
   output$forecast.quarter <- renderUI({
-    selectInput("forecast.qq", "Select the Skill Bucket",
+    selectInput("forecast.qq", "Select the Quarter",
                 choices = unique(subset(demand.dump, tolower(demand.dump$country)==tolower(input$custloc) & tolower(demand.dump$Skill.Bucket)==tolower(input$forecast.ss) & demand.dump$year == input$forecast.yy)$quarter),
                 selected = "option3"
     )
