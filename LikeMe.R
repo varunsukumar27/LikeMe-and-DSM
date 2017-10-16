@@ -74,6 +74,152 @@ cons$week <- quarter(cons$date)
 cons$year <- year(cons$date)
 dem <- cons
 
+############################################Customer Forecast#################################################
+cust.forecast <- function(a,b,c, country){
+  if(country=="India"){
+    setwd("C:/HCL/LikeMe") 
+    demand <- read.csv("dump2.csv", header = TRUE, stringsAsFactors = FALSE)
+    demand <- subset(demand, demand$country=="INDIA")
+    setwd("C:/HCL/LikeMe/Demand") 
+    write.csv(demand,"demand.csv")
+    write.csv(demand, "dump.csv")
+  }else{
+    setwd("C:/HCL/LikeMe") 
+    demand <- read.csv("dump2.csv", header = TRUE, stringsAsFactors = FALSE)
+    demand <- subset(demand, demand$country=="USA")
+    setwd("C:/HCL/LikeMe/Demand") 
+    write.csv(demand,"demand.csv")
+    write.csv(demand, "dump.csv")  
+  }
+  setwd("C:/HCL/LikeMe/Demand")
+  master.demand <- read.csv("dump.csv")
+  print("Start Maps")
+  demand.area <- master.demand
+  demand.area$quarter <- quarter(dmy(demand.area$Approval.Date))
+  demand.area$year <- year(dmy(demand.area$Approval.Date))
+  demand.area$month <- month(dmy(demand.area$Approval.Date))
+  if(a!="All"){
+    demand.area <- aggregate(demand.area$InitialDemand, by = list(demand.area$quarter,demand.area$year,demand.area$Skill.Bucket, demand.area$Customer), FUN = sum)
+    colnames(demand.area) <- c("Quarter", "Year", "Skill", "Customer", "Demand")
+  }else{
+    demand.area <- aggregate(demand.area$InitialDemand, by = list(demand.area$quarter,demand.area$year, demand.area$Customer), FUN = sum)  
+    colnames(demand.area) <- c("Quarter", "Year", "Customer", "Demand")
+  }
+  demand.area$time <- paste("Q",demand.area$Quarter,"-",demand.area$Year)
+  
+  
+  #all_states <- map_data("county")
+  #colnames(all_states) <- c("long","lat", "group", "order", "Location", "subregion")
+  #demand.area$Location <- tolower(demand.area$Location)
+  if(a!="All"){
+    Total <- subset(demand.area, demand.area$Skill == a & Year == c & Quarter ==b)
+  }else{
+    Total <- subset(demand.area,  Year == c & Quarter ==b)  
+  }
+  #Total <- merge(all_states, demand.area,all = TRUE)
+  #Total <- Total[Total$Location!="district of columbia",]
+  #Total <- Total[order(Total$order),]
+  #Total$Demand[is.na(Total$Demand)] <- 0
+  
+  #setwd("C:/HCL/LikeMe")
+  #states <- read.csv("states.csv")
+  #colnames(states) <- c("Column1", "long", "lat", "order", "hole", "piece", "Location", "group")
+  #st <- data.frame(Location = unique(map_data('county')$region))
+  #Total <- merge(st, Total, all = TRUE)
+  Total$Demand[is.na(Total$Demand)] <- 0
+  #Total <- merge(states, Total, all = TRUE)
+  #Total$Demand[is.na(Total$Demand)] <- 0
+  Total <- data.frame(Customer = Total$Customer, Demand = Total$Demand)
+  #Total <- subset(Total, Total$State != "district of columbia")
+  Total <- Total[order(Total$Demand,decreasing = TRUE),]
+  Total <- subset(Total, Total$Demand!=0)
+  Total <- Total[1:10,]
+  #mapUSA <- map('state',  fill = TRUE,  plot = FALSE)
+  #nms <- sapply(strsplit(mapUSA$names,  ':'),  function(x)x[1])
+  #USApolygons <- map2SpatialPolygons(mapUSA,  IDs = nms,  CRS('+proj=longlat'))
+  #idx <- match(unique(nms),  Total$Location)
+  #dat2 <- data.frame(value = Total$Demand[idx], state = unique(nms))
+  #row.names(dat2) <- unique(nms)
+  #USAsp <- SpatialPolygonsDataFrame(USApolygons,  data = dat2)
+  #spplot(USAsp['value'])
+  
+  print("End Maps")
+  
+  forecasting <- function(cust){
+    setwd("C:/HCL/LikeMe/Demand")
+    #print(loca)
+    demand <- read.csv("dump.csv",stringsAsFactors = F)
+    
+    demand$date <- dmy(demand$Req.Date)
+    demand$quarter <- quarter(demand$date)
+    demand$month <- month(demand$date)
+    demand$year <- year(demand$date)
+    demand$week <- week(demand$date)
+    
+    dates <- demand
+    #demand <- demand %>% filter(demand$country == "INDIA")
+    if(a!="All"){
+      demand <- demand %>% filter(demand$Skill.Bucket == a)
+    }
+    location.demand <- aggregate(demand$InitialDemand, by=list(demand$Customer), FUN = sum)
+    location.demand <- location.demand[order(location.demand$x, decreasing = T),]
+    location.demand <- location.demand[1:3,]$Group.1
+    
+    demand <- demand %>% filter(tolower(demand$Customer) == tolower(cust))
+    if(nrow(demand)==0){
+      return(0)
+    }else{
+      demand <- aggregate(demand$InitialDemand, by = list(demand$week, demand$year), FUN = sum)
+      colnames(demand) <- c("Week","Year","Demand")
+      
+      setwd("C:/HCL/LikeMe")
+      template <- read.csv("template2015.csv")
+      colnames(template) <- c("Year", "Week")
+      demand <- merge(template, demand, all = TRUE)
+      demand$Demand[is.na(demand$Demand)] <- 0
+      
+      if(month(max(dates$date)) %in% c(1,2,3)){
+        n <- length(unique(dates$year))-1
+        n <- n*52
+        demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = n))
+      }
+      if(month(max(dates$date)) %in% c(4,5,6)){
+        n <- length(unique(dates$year))-1
+        n <- (n*52)+13
+        demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
+      }
+      if(month(max(dates$date)) %in% c(7,8,9)){
+        n <- length(unique(dates$year))-1
+        n <- (n*52)+26
+        demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
+      }
+      if(month(max(dates$date)) %in% c(10,11,12)){
+        n <- length(unique(dates$year))-1
+        n <- (n*52)+38
+        demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
+      }
+      plot(demand.ts)
+      #Acf(demand.ts)
+      #Pacf(demand.ts)
+      
+      return(round(sum(forecast(auto.arima(demand.ts),h=12)$mean[1:12])))
+    }
+    
+  }
+  
+  
+  
+  toplocation <- Total$Customer
+  toplocation <- lapply(toplocation,function(x)forecasting(x))
+  Total$'Forecast for the Next Quarter' <- unlist(toplocation)
+  return(Total)
+  
+  
+}
+
+
+
+
 ############################################Combination Forecast############################################
 combopred <- function(a,b,c, country){    
   if(country=="India"){
@@ -3337,10 +3483,18 @@ server <- function(input, output, session) {
   data11 <- eventReactive(input$cust,{fulfillment.location(input$forecast.ss[1])})
   data.popularity <- eventReactive(input$popularity,{popularity(input$poploc,input$dynamic,input$dyna)})
   data.combforecast <- eventReactive(input$cust,{combopred(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
-  #data.custforecast <- eventReactive(input$cust,{combopred(input$custskill[1],input$custquarter[1],input$custyear[1],input$custloc[1])})
+  data.custforecast <- eventReactive(input$cust,{cust.forecast(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
   
   #datawiki <- eventReactive(input$go4,{search(input$skilla[1])})
   #datawiki <- eventReactive(input$go4,{newman(input$skilla[1], input$num, input$bucks, input$subarea, input$custa)), function (x) {search(x)})})
+  
+  output$custforecast <- DT::renderDataTable({
+    # specify some map projection/options
+    data.custforecast()
+    
+  })
+  
+  
   output$combforecast <- DT::renderDataTable({
     # specify some map projection/options
     data.combforecast()
