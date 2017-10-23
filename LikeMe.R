@@ -1778,6 +1778,65 @@ list_customer<- function (customer){
   
 }
 
+act_customer<- function (skill){
+  
+  if (skill!=""){
+    cust_list<- c("", as.character(unique( dd1$customer[ dd1[,skill]>0])))
+  }
+  
+  else {
+    cust_list<-c("",as.character(unique((demandda$Customer))))  
+  }
+  return (cust_list)
+}
+
+act_skill<- function (skill){
+  
+  if (skill!=""){
+    cust_list<- c("", as.character(unique( demandda$Skill.Bucket[ dd1[,skill]>0])))
+  }
+  
+  else {
+    cust_list<-c("",as.character(unique((demandda$Skill.Bucket))))  
+  }
+  return (cust_list)
+}
+
+act_location<- function (skill){
+  
+  if (skill!=""){
+    cust_list<- c("", as.character(unique( demandda$Personal.SubArea[ dd1[,skill]>0])))
+  }
+  
+  else {
+    cust_list<-c("",as.character(unique((demandda$Personal.SubArea))))  
+  }
+  return (cust_list)
+}
+
+
+
+
+# act_skill_bucket<- function (skill){
+#   
+#   if (skill!=""){
+#     cust_list<- c("", as.character(unique( dd1$customer[ dd1[,skill]>0])))
+#   }
+#   
+#   else {
+#     cust_list<-c("",as.character(unique((dd1))))  
+#   }
+#   return (cust_list)
+# }
+# 
+
+
+
+
+
+
+
+
 list_skillbucket<- function (customer){
   
   if (customer!=""){
@@ -1796,7 +1855,7 @@ list_skillbucket<- function (customer){
 
 list_location<- function (customer){
   
-  if (customer!=""){
+  if(customer!=""){
     
     skill_list<-unique(demandda$Personal.SubArea[demandda$Customer==customer])
   }
@@ -1830,7 +1889,7 @@ customer<-function(input){
 }
 
 newman<-function(input, n, skillbucket, subarea,customer){
-  #setwd("C:\\Users\\Newman\\Documents\\Final demo")
+  setwd("C:\\Users\\Newman\\Documents\\Final demo")
   print("loading datafile")
   
   # Data_for<-read.csv("excel.csv")
@@ -2964,7 +3023,8 @@ ui <- dashboardPage(#skin = "blue",
                               status = "danger",
                               solidHeader = TRUE,
                               collapsible = TRUE,
-                              uiOutput("Box1"),
+                              uiOutput("series"),
+                              uiOutput("varun1"),
                               uiOutput("Box3"),
                               uiOutput("Box4"),
                               uiOutput("Box5"),
@@ -3426,31 +3486,70 @@ popularity <- function(country,cust, skillbucket){
 server <- function(input, output, session) {
   
   
-  output$Box1 = renderUI(selectInput("custa","Select Customer",choices = c("",as.character( unique(demandda$Customer)))))
+  output$series<-renderUI({
+    radioButtons("radio","Select deep dive", c("Skill" = "Skill","Customer" = "Customer"))
+  })
   
+  output$varun1 <- renderUI({
+    if (is.null(input$radio))
+      return()
+    
+    
+    # Depending on input$input_type, we'll generate a different
+    # UI component and send it to the client.
+    switch(input$radio,"Customer" = selectInput("custa", "Select the Customer",
+                                                choices = c("",as.character( unique(demandda$Customer))),
+                                                selected = "option2"),
+           "Skill" = selectInput("skilla", "Select the Skill",
+                                 choices = c("",as.character(unique(colnames(dd)))),
+                                 selected = "option2"
+           )
+           
+    )
+  })
+  
+  
+  
+  #   
+  # output$Box1 = renderUI({
+  #   
+  #   if ((input$radio=="Skill"))
+  #     return(selectInput("skilla", "Select Skill",choices = c("",as.character(unique(colnames(dd))))))
+  #   
+  #   selectInput("custa","Select Customer",choices = c("",as.character( unique(demandda$Customer))))
+  #   })
+  # 
   #output$Box2 = renderUI(selectInput("skilla","Select Skill",  choices = c("",skill_list)))
   
   #"skilla","Select Skill",  choices = c("",skill_list))
   
-  output$Box3 = renderUI(
+  output$Box3 = renderUI({
     # if (is.null(input$custa) || input$custa == ""){return()
     #}else 
+    if ((input$radio=="Skill"))
+      return(selectInput("custa", "Select Customer", choices= act_customer(input$skilla)))
+    
     selectInput("skilla", 
                 "Select Skill", 
                 choices = c("", list_customer(input$custa))
-    ))
+    )})
   
-  output$Box4 = renderUI(
+  output$Box4 = renderUI({
+    if ((input$radio=="Skill"))
+      return(selectInput("bucks", "Select Skill Bucket", choices =c("", act_skill(input$skilla))))
     # if (is.null(input$custa) || input$custa == ""){return()
     #}else 
     selectInput("bucks","Select Skill Bucket",choices = c( "",list_skillbucket(input$custa)))
-  )
+  })
   
-  output$Box5 = renderUI(
+  output$Box5 = renderUI({
+    
+    if ((input$radio=="Skill"))
+      return(selectInput("subarea", "Select Location", choices =c("", act_location(input$skilla))))
     # if (is.null(input$custa) || input$custa == ""){return()
     #}else 
     selectInput("subarea","Select Location",choices = c("",list_location(input$custa)))
-  )
+  })
   
   output$Box6 = renderUI(
     # if (is.null(input$custa) || input$custa == ""){return()
