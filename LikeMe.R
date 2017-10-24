@@ -1888,10 +1888,10 @@ customer<-function(input){
   return(plo)                        
 }
 
-newman<-function(input, n, skillbucket, subarea,customer){
+newman<-function(input, n, skillbucket, subarea,customer,raio){
   setwd("C:\\Users\\Newman\\Documents\\Final demo")
   print("loading datafile")
-  
+  if (input!=""){
   # Data_for<-read.csv("excel.csv")
   # finaltokens<-read.csv("thefile.csv")
   # finaltokens$Skill_tokens<-as.character(finaltokens$Skill_tokens)
@@ -2009,6 +2009,76 @@ newman<-function(input, n, skillbucket, subarea,customer){
   #d3<-as.dist(d3)
   #fit <- hclust(d3)
   return(list(tra, jd, freq))
+  }
+  
+  else {
+    A<-1:nrow(demandda)
+    if (customer!=""){
+      A<-which(demandda$Customer == customer)}
+    B<-1:nrow(demandda)
+    if (subarea!=""){
+      B<-which(demandda$Personal.SubArea == subarea)}
+    C<-1:nrow(demandda)
+    if (skillbucket!="") {
+      C<-which(demandda$Skill.Bucket==skillbucket)}
+    
+    D<-intersect(A,B)
+    E<-intersect(D,C)
+    tdddataframe<-as.data.frame(tdddataframe[,E])
+    row.names(tdddataframe)<-skill
+    
+    addition<-nrow(tdddataframe)+1
+    tdddataframe[addition,]<-1
+    
+    no<-length(tdddataframe)+1
+    tdddataframe[,no]<-0
+    #d<- tdddataframe[input,]
+    #coun<-d[, colSums(d == 0)== 0]
+    freq<- length(tdddataframe)-1
+    
+    dista <- function(x) ((1-cor(t(x)))/2)
+    #row.names(skillMatrix)<-skills
+    jd<-length(tdddataframe)-1
+    
+    if (jd==31049){
+      
+      print("using India Distance")
+      distmatrix<-indiadistance
+    }
+    else {
+      d1 <- dista(tdddataframe)
+      distmatrix<-as.data.frame(d1)    
+      
+    }
+    Skills_new<-as.data.frame(distmatrix[,addition])
+    str(Skills_new)
+    names(Skills_new)<-"dist"
+    Skills_new$skills<-row.names(tdddataframe)
+    
+    data1<-Skills_new$skills[which(Skills_new$dist<=0.5)]
+    data2<-head( (Skills_new[order(Skills_new$dist, decreasing=FALSE),]),n)
+    data2<- data2[data2$skills!=addition,]
+    data<-intersect(data1,data2$skills)
+    
+    data2<-data2[is.element(data2$skills,data),]
+    data2<- data2[order(data2$dist, decreasing=FALSE),]
+    data2$dist<-as.numeric(lapply(data2$dist, function(x) 1-x))
+    d<-max(data2$dist)+0.02
+    data2$max<-d
+    f<-min(data2$dist)-0.02
+    data2$min<-f
+    data3<-data2[c(4,3,1)]
+    tra<-data.frame(t(data3))
+    
+    names(tra)<- data2$skills
+    
+    return(list(tra, jd, freq))
+    
+  }
+  
+  
+  
+  
 }
 
 alter<-function (name){
@@ -3049,13 +3119,13 @@ ui <- dashboardPage(#skin = "blue",
                               tableOutput("skills3")
                               
                             ),
-                            box(
-                              title = "Customer Radar",
-                              status = "danger",
-                              solidHeader = TRUE,
-                              collapsible = TRUE,
-                              plotlyOutput("skills2")
-                            ),
+                            # box(
+                            #   title = "Customer Radar",
+                            #   status = "danger",
+                            #   solidHeader = TRUE,
+                            #   collapsible = TRUE,
+                            #   plotlyOutput("skills2")
+                            # ),
                             mainPanel( dataTableOutput("links"))
                             
                             
@@ -3489,7 +3559,7 @@ server <- function(input, output, session) {
   output$series<-renderUI({
     radioButtons("radio","Select deep dive", c("Skill" = "Skill","Customer" = "Customer"))
   })
-  
+############################################ref##################################  
   output$varun1 <- renderUI({
     if (is.null(input$radio))
       return()
@@ -3557,6 +3627,7 @@ server <- function(input, output, session) {
     sliderInput(inputId = "num", label = "Choose a number", value = 20, min=1, max = 50)
   )
   
+  
   output$Box7 = renderUI(
     # if (is.null(input$custa) || input$custa == ""){return()
     #}else 
@@ -3573,7 +3644,7 @@ server <- function(input, output, session) {
   data1 <- eventReactive(input$cust, {forecaster(input$forecast.ss[1],input$custloc[1])})
   data2 <- eventReactive(input$cust, {maps(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
   data3 <- eventReactive(input$cust, {maptable(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
-  data4 <- eventReactive(input$go4, {newman(input$skilla[1], input$num, input$bucks, input$subarea, input$custa)})
+  data4 <- eventReactive(input$go4, {newman(input$skilla[1], input$num, input$bucks, input$subarea, input$custa, input$radio)})
   data5 <- eventReactive(input$go5,{manji(input$skills1,input$Experience, input$Customer, input$Job_family,input$Designation,input$Skill_category, input$L2, input$L3, input$Band, input$Sub_band, input$Personal_subarea)})
   data6 <- eventReactive(input$go6,{jobboard(input$kill1,input$kill2, input$kill3)})
   data7 <- eventReactive(input$cust,{custskill1(input$forecast.ss, input$forecast.yy, input$forecast.qq)})
@@ -3853,8 +3924,10 @@ choices = unique(subset(subset(demand.dump, demand.dump$country==input$poploc),
   output$skills <- renderPlot({
     radarchart(data.frame(data4()[1], check.names = FALSE),pcol = "red")
   })
-  
-  output$skills2 <- renderPlotly({
+##############################################indicator########################  
+  output$skills2 <-    renderPlotly({
+    if ((input$skilla==""))
+      return()
     plot_ly(data=data9(),x = as.factor(data9()$custo),y = data9()$total,   type = "bar")%>%layout(xaxis = list(categoryorder = "array",
                                                                                                                categoryarray = (data9()$custo)))
     
