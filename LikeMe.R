@@ -3805,7 +3805,8 @@ choices = unique(subset(subset(demand.dump, demand.dump$country==input$poploc),
   
   #Displays a table with skills separated with commas.
   output$links<-  DT::renderDataTable({
-    #data4()
+    # #data4()
+    print(data4()[1])
     datatable((data.frame(Skill = colnames(data.frame(data4()[1], check.names =FALSE )),
                           alternativess= unlist(lapply(colnames(data.frame(data4()[1], check.names = FALSE)), function (x) {alter(x)})),Definitions = unlist(lapply(colnames(data.frame(data4()[1], check.names = FALSE)), function (x) {defin(x)})))), options = list(columnDefs = list(list(
                             targets = 3,
@@ -3815,7 +3816,8 @@ choices = unique(subset(subset(demand.dump, demand.dump$country==input$poploc),
                               "'<span title=\"' + data + '\">' + data.substr(0, 400) + '...</span>' : data;",
                               "}")
                           ))), callback = JS('table.page(3).draw(false);'))
-    
+
+   
   })
   
   #Displays a box with the Overall demand for the quarter and year selected.
