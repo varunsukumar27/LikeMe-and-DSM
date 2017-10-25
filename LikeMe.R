@@ -1889,7 +1889,7 @@ customer<-function(input){
 }
 
 newman<-function(input, n, skillbucket, subarea,customer,raio){
-  setwd("C:\\Users\\Newman\\Documents\\Final demo")
+  #setwd("C:\\Users\\Newman\\Documents\\Final demo")
   print("loading datafile")
   if (input!=""){
     # Data_for<-read.csv("excel.csv")
