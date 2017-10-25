@@ -282,10 +282,10 @@ combopred <- function(a,b,c, country){
     Total.customer <- Total.customer[order(Total.customer$Demand, decreasing = T),]
     Total.customer <- Total.customer$Customer[1:5]
   }
-  #print(Total.customer)
-  #print(Total.location)
+  print(Total.customer)
+  print(Total.location)
   grid <- expand.grid(Total.location, Total.customer)
-  #print(grid)
+  print(grid)
   colnames(grid) <- c("Location","Customer")
   
   combination.forecasting<-function(Locat,Custo){
@@ -598,7 +598,7 @@ jobboard<-function(skill1,skill2,skill3) {
 ###########################################Content Based Search################################################
 manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Designation,skillcatergory,L3, L4,  Band,Sub_band, Personalsubarea){
   
-  #print(skill_bucket)
+  print(skill_bucket)
   #setwd("C:\\Users\\Newman\\Documents\\Final demo")
   
   datasetexp<-read.csv("excel1.csv", stringsAsFactors = FALSE)
@@ -1539,9 +1539,9 @@ maptable <- function(a,b,c, country){
   setwd("C:/HCL/LikeMe/Demand")
   master.demand <- read.csv("dump.csv")
   print("Start maptsble")
-  #print(a)
-  #print(b)
-  #print(c)
+  print(a)
+  print(b)
+  print(c)
   demand.area <- master.demand
   demand.area$quarter <- quarter(dmy(demand.area$Approval.Date))
   demand.area$year <- year(dmy(demand.area$Approval.Date))
@@ -1662,7 +1662,7 @@ maps <- function(a,b,c, country){
   
   forecasting <- function(loca){
     setwd("C:/HCL/LikeMe/Demand")
-    #print(loca)
+    print(loca)
     demand <- read.csv("dump.csv",stringsAsFactors = F)
     
     demand$date <- dmy(demand$Req.Date)
@@ -2049,14 +2049,14 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   skills <- read.csv("skillClustering.csv", header = TRUE, stringsAsFactors = FALSE)
   stp <- read.csv("stopwords.csv", header = TRUE, stringsAsFactors = FALSE)
   
-  #print(skill1)
-  #print(job1)
-  #print(exp1)
-  #print(stype1)
-  #print(sk.ill)
-  #print(num1)
-  #print(clack)
-  #print("loading dataset")
+  print(skill1)
+  print(job1)
+  print(exp1)
+  print(stype1)
+  print(sk.ill)
+  print(num1)
+  print(clack)
+  print("loading dataset")
   
   if(stype1 == "eser"){
     candidates <- read.csv("external.csv", stringsAsFactors = FALSE)
@@ -2120,8 +2120,8 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   print("Creating a Bag of Words")
   term.frequency <- function(row) {
     
-    #print(row)
-    #print(sum(row))
+    print(row)
+    print(sum(row))
     row / sum(row)
     #0.5+(0.5*(row/max(row)))
     
@@ -2138,8 +2138,8 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   
   
   tf.idf <- function(x, idf) {
-    #print(x)
-    #print(idf)
+    print(x)
+    print(idf)
     x * idf
   }
   
@@ -2502,7 +2502,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   #score1$cumulative <- NULL
   #score1$`Employee Code` <- NULL
   print("Return Table")
-  #print(score1)
+  print(score1)
   return(score1)
 }
 
@@ -3371,7 +3371,7 @@ fulfillment.location <- function(skill){
   # ylab(paste("Average fulfillment percentage for",skill))+
   #theme(axis.text.x = element_text(angle = 90, hjust = 1))
   #plot_ly(data=master.skill.initial.customer,x = as.factor(master.skill.initial.customer$Group.1),y = master.skill.initial.customer$x,   type = "bar")
-  #print(master.skill.initial.customer)
+  print(master.skill.initial.customer)
   return(master.skill.initial.customer)                                                                                                        
 }
 
