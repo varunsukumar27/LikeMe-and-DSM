@@ -2056,7 +2056,11 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   #print(sk.ill)
   #print(num1)
   #print(clack)
+<<<<<<< HEAD
   #print("loading dataset")
+=======
+  print("loading dataset")
+>>>>>>> parent of 628d77e... Merge branch 'master' of https://github.com/varunsukumar27/LikeMe-and-DSM
   
   if(stype1 == "eser"){
     candidates <- read.csv("external.csv", stringsAsFactors = FALSE)
@@ -2121,7 +2125,11 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   term.frequency <- function(row) {
     
     #print(row)
+<<<<<<< HEAD
     #print(sum(row))
+=======
+    print(sum(row))
+>>>>>>> parent of 628d77e... Merge branch 'master' of https://github.com/varunsukumar27/LikeMe-and-DSM
     row / sum(row)
     #0.5+(0.5*(row/max(row)))
     
