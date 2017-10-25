@@ -3087,6 +3087,9 @@ ui <- dashboardPage(#skin = "blue",
                           ),
                   tabItem(tabName = "skill",
                           tags$h1("Skill Radar"),
+                          tags$h3("Data : 31049 Job descriptions (Jan 2016 to Aug 2017)"),
+                          tags$h4("Results available for 582 Customers,33 Skill buckets,
+65 different locations,2835 Technological keywords and all their combinations "),
                           fluidRow(
                             box(
                               title = "Select the skill and the radar range",
