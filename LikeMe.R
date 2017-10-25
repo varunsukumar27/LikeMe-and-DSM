@@ -3119,7 +3119,7 @@ ui <- dashboardPage(#skin = "blue",
                               status = "danger",
                               solidHeader = TRUE,
                               collapsible = TRUE,
-                              tableOutput("skills3")
+                              dataTableOutput("skills3")
                               
                             ),
                             # box(
@@ -3936,8 +3936,8 @@ server <- function(input, output, session) {
     
   })
   
-  output$skills3 <- renderTable({
-    data.frame(Boolean=paste(colnames(data.frame(data4()[1])),collapse = ","))
+  output$skills3 <- renderDataTable({
+    datatable( data.frame(Boolean=paste(colnames(data.frame(data4()[1], check.names = FALSE)),collapse = ",")))
   })
   #newmanvalue box like e radar
   output$frequency <- renderValueBox({
