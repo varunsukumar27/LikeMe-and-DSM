@@ -1,3 +1,4 @@
+start <- Sys.time()
 setwd("C:/HCL/LikeMe")
 
 
@@ -30,14 +31,15 @@ library(DT)
 
 
 demand <- read.csv("demand.csv", stringsAsFactors = FALSE)
-demand.dump <- read.csv("dump2.csv", stringsAsFactors = FALSE)
+demand.dump <- demand
+#demand.dump <- read.csv("dump2.csv", stringsAsFactors = FALSE)
 demand.dump$quarter <- quarter(dmy(demand.dump$Approval.Date))
 demand.dump$year <- year(dmy(demand.dump$Approval.Date))
 demand.dump$month <- month(dmy(demand.dump$Approval.Date))
-finaltokens <- read.csv("skillnames.csv")
+#finaltokens <- read.csv("skillnames.csv")
 datasetexp<-read.csv("excel1.csv", stringsAsFactors = FALSE)
-twm <- read.csv("twm.csv", stringsAsFactors = FALSE)
-refer<-read.csv("reference.csv ")
+#twm <- read.csv("twm.csv", stringsAsFactors = FALSE)
+#refer<-read.csv("reference.csv ")
 colors <- c('#4AC6B7', '#2457C5', '#DF0B0B',"#24C547", '#E71BB6')
 #uniquename<-read.csv("uniquenames.csv") # 1st Data delete
 #demandda<-read.csv("demand1.csv") #2nd data delete
@@ -68,7 +70,7 @@ tdddataframe<-data.frame(tdd,stringsAsFactors=FALSE)
 #row.names(tdddataframe)<-skillname$Skill.names
 tdd1<-tdddataframe
 
-tech<-read.csv("techie.csv")
+#tech<-read.csv("techie.csv")
 
 cons <- read.csv("Consolidated.csv", stringsAsFactors = F)
 cons$date <- dmy(cons$Req.Date)
@@ -78,6 +80,7 @@ dem <- cons
 
 ############################################Customer Forecast#################################################
 cust.forecast <- function(a,b,c, country){
+  cust.forecast <- Sys.time()
   if(country=="India"){
     setwd("C:/HCL/LikeMe") 
     demand <- read.csv("dump2.csv", header = TRUE, stringsAsFactors = FALSE)
@@ -95,7 +98,7 @@ cust.forecast <- function(a,b,c, country){
   }
   setwd("C:/HCL/LikeMe/Demand")
   master.demand <- read.csv("dump.csv")
-  print("Start Maps")
+  #print("Start Maps")
   demand.area <- master.demand
   demand.area$quarter <- quarter(dmy(demand.area$Approval.Date))
   demand.area$year <- year(dmy(demand.area$Approval.Date))
@@ -108,7 +111,6 @@ cust.forecast <- function(a,b,c, country){
     colnames(demand.area) <- c("Quarter", "Year", "Customer", "Demand")
   }
   demand.area$time <- paste("Q",demand.area$Quarter,"-",demand.area$Year)
-  
   
   #all_states <- map_data("county")
   #colnames(all_states) <- c("long","lat", "group", "order", "Location", "subregion")
@@ -145,7 +147,7 @@ cust.forecast <- function(a,b,c, country){
   #USAsp <- SpatialPolygonsDataFrame(USApolygons,  data = dat2)
   #spplot(USAsp['value'])
   
-  print("End Maps")
+  #print("End Maps")
   
   forecasting <- function(cust){
     setwd("C:/HCL/LikeMe/Demand")
@@ -200,7 +202,7 @@ cust.forecast <- function(a,b,c, country){
         n <- (n*52)+38
         demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
       }
-      plot(demand.ts)
+      #plot(demand.ts)
       #Acf(demand.ts)
       #Pacf(demand.ts)
       
@@ -216,7 +218,7 @@ cust.forecast <- function(a,b,c, country){
   Total$'Forecast for the Next Quarter' <- unlist(toplocation)
   return(Total)
   
-  
+  print(Sys.time() - cust.forecast.time)
 }
 
 
@@ -242,7 +244,7 @@ combopred <- function(a,b,c, country){
   
   setwd("C:/HCL/LikeMe/Demand")
   master.demand <- read.csv("dump.csv")
-  print("Start Maps")
+  #print("Start Maps")
   demand.area <- master.demand
   demand.area$date <- dmy(demand.area$Approval.Date)
   demand.area$quarter <- quarter(dmy(demand.area$Approval.Date))
@@ -282,10 +284,10 @@ combopred <- function(a,b,c, country){
     Total.customer <- Total.customer[order(Total.customer$Demand, decreasing = T),]
     Total.customer <- Total.customer$Customer[1:5]
   }
-  print(Total.customer)
-  print(Total.location)
+  #print(Total.customer)
+  #print(Total.location)
   grid <- expand.grid(Total.location, Total.customer)
-  print(grid)
+  #print(grid)
   colnames(grid) <- c("Location","Customer")
   
   combination.forecasting<-function(Locat,Custo){
@@ -380,7 +382,7 @@ jobboard<-function(skill1,skill2,skill3) {
   
   names(add)<-c("city6","nos")
   
-  print("unique list")
+  #print("unique list")
   a_dummy<-data.frame(l)
   names(a_dummy)<-"keywords"
   a_dummy$no_of_searches<-0
@@ -403,7 +405,7 @@ jobboard<-function(skill1,skill2,skill3) {
   # s<-gsub("\\,", "", s)
   # a_dummy$no_of_searches[i]<-s
   # }
-  print("indeed loop")
+  #print("indeed loop")
   for (i in 1:len){
     d<-gsub(" ", "+", l[i], fixed=TRUE)
     if (d=="Cascading+Style+Sheets+(CSS)"){
@@ -596,331 +598,331 @@ jobboard<-function(skill1,skill2,skill3) {
 
 
 ###########################################Content Based Search################################################
-manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Designation,skillcatergory,L3, L4,  Band,Sub_band, Personalsubarea){
-  
-  print(skill_bucket)
-  #setwd("C:\\Users\\Newman\\Documents\\Final demo")
-  
-  datasetexp<-read.csv("excel1.csv", stringsAsFactors = FALSE)
-  datasetexp<-datasetexp[!duplicated(datasetexp$Requistion.No),]
-  
-  demanddata = read.xlsx ("for test.xlsm", sheet = 1)
-  datasetexp$Position<-tolower(datasetexp$Position)
-  
-  datasetexp$hybrid<-paste(tolower(datasetexp$Customer.Name), tolower(datasetexp$L1.Name),tolower(datasetexp$L4.Name),  tolower(datasetexp$L2.Name), tolower(datasetexp$L3.Name), tolower(datasetexp$job.family), tolower(datasetexp$Track.Map.1..New.Job.Family.),   tolower(datasetexp$L2.Name), tolower(datasetexp$Customer.Name),tolower(datasetexp$Employee.Band),  tolower(datasetexp$L3.Name),tolower(datasetexp$L4.Name), tolower(datasetexp$SourceName), tolower(datasetexp$vAdditionalRemarks), tolower(datasetexp$experience),tolower(datasetexp$Project.Name),tolower(datasetexp$skills),  tolower(datasetexp$Personal.Sub.Area), tolower(datasetexp$job.family),tolower(datasetexp$job.family.1),tolower(datasetexp$Job.New), tolower(datasetexp$skills), sep=" ")
-  
-  datasetexp$skill_consolidated<-paste(datasetexp$Grade.1..AND.,datasetexp$Grade.1..OR., sep = ",")
-  
-  demanddata1<-read.csv("demanddata2.csv", stringsAsFactors = FALSE)
-  names(demanddata)<-names(demanddata1)
-  
-  len<-NROW(demanddata)
-  demanddata$noofmatchesbyL2<-0
-  demanddata$L2previousjobroles<-0
-  
-  
-  
-  #demanddata$skill1<-0
-  #demanddata$skill2<-0
-  #demanddata$skill2<-gsub("(.*? )", "", demanddata$Skill.Area..Primary...SkillLevel2_P.)
-  #demanddata$skill1<-gsub("([A-Za-z]+).*", "\\1", demanddata$Skill.Area..Primary...SkillLevel2_P.)
-  
-  
-  demanddata$both<-0
-  demanddata$noofmatchboth<-0
-  demanddata$prevorg<-0
-  
-  #datasetexp$job.family
-  demanddata$skill_Dept<-0
-  demanddata$candidateSAP<-0
-  demanddata$loc<-0
-  for (i in 1:len){
-    
-    #h<-tolower(as.character(demanddata$L3..L3.[i]))
-    #data1<-datasetexp[grepl(h, tolower( datasetexp$L3.Name),fixed = TRUE),]
-    h<-tolower(as.character(skill_bucket))
-    data<-datasetexp[grepl(h, tolower(datasetexp$Skillbucket ),fixed = TRUE),]
-    data1<- data
-    #data1<-data1[!duplicated(data1), ]
-    
-    #h<-tolower(as.character(demanddata$Job.Family..iFunctionID.[i]))
-    #data1<-data1%>%filter(grepl(h, hybrid) )
-    if (NROW(data1)>0){
-      # data1$score<-0
-      # data1$yearofexp<-0
-      # data1$L1points<-0
-      # data1$l2points<-0
-      # data1$iEmpGroupTypepoints<-0
-      data1$yearofexp<-grepl(tolower(Experience), data1$hybrid)
-      data1$L1points<-grepl(tolower(L3), data1$hybrid)
-      data1$L3points<-grepl(tolower(L3), data1$hybrid)
-      data1$l4ponts<-grepl(tolower(L4), data1$hybrid)
-      data1$skill_category_points<-grepl(tolower(skillcatergory),data1$hybrid)
-      data1$customer_points<-grepl(tolower(Customername),data1$hybrid)
-      data1$Band_points<-grepl(tolower(Band), data1$hybrid)
-      data1$band_points2<-grepl(tolower(Sub_band),data1$hybrid)
-      data1$designation_points<-grepl(tolower(Designation),data1$hybrid)
-      data1$jobfamily_functions<-grepl(tolower(Jobfamilyfunction),data1$hybrid)
-      data1$job_points<-grepl(tolower(Jobfamilyfunction),data1$hybrid)
-      data1$sub_areapoints<-grepl(tolower(Personalsubarea),data1$hybrid)             
-      #data1$iEmpGroupTypepoints<-grepl(tolower(demanddata$EMP.Type_New[i]), data1$hybrid)
-      data1$Skillbucketpoints<-grepl(tolower(skill_bucket),tolower(data1$Skillbucket), fixed = TRUE)
-      data1$Skillbucketpoints1<-grepl(tolower(skill_bucket),tolower(data1$Skillbucket), fixed = TRUE)
-      data1$Skillbucketpoints2<-grepl(tolower(skill_bucket),tolower(data1$Skillbucket), fixed = TRUE)
-      data1$Skillbucketpoints3<-grepl(tolower(skill_bucket),tolower(data1$Skillbucket), fixed = TRUE)
-      data1$score<-rowSums(data1[c( "Skillbucketpoints", "Skillbucketpoints1","Skillbucketpoints2","Skillbucketpoints3",  "yearofexp","L1points","L3points","l4ponts","skill_category_points","customer_points","Band_points","band_points2","designation_points","jobfamily_functions","job_points","sub_areapoints")], na.rm=FALSE)
-      data1<-data1[order(data1$score, decreasing = TRUE), ] 
-      data1<-head(data1,5)
-      demanddata$both[i]<-paste(data1$Position,collapse = " OR ")
-      demanddata$prevorg[i]<-paste(data1$Employer.Name, collapse = " ")
-      demanddata$skill_Dept[i]<-paste(data1$skill_consolidated, collapse = ",")
-      demanddata$candidateSAP[i]<-paste(data1$CV.ID, collapse = " ")
-      demanddata$loc[i]<-paste(data1$Location, collapse = " ")
-      demanddata$noofmatchboth[i]<-NROW(data1)
-      
-    }
-    
-    
-  }
-  
-  
-  print("scoring_done")
-  #names(demanddata)
-  demanddata$skill_Dept<- gsub("\\/", " ", demanddata$skill_Dept)
-  demanddata$skill_Dept<- gsub("\\-", " ", demanddata$skill_Dept)
-  
-  
-  #demanddata$skill_Dept<- gsub("\\,", " ", demanddata$skill_Dept)
-  for (i in 1:NROW(demanddata$skill_Dept))
-  {
-    x<-unique(unlist(strsplit(tolower(demanddata$skill_Dept[i]), split=",")))
-    x<-trimws(x, which = c("both"))
-    demanddata$skill_Dept[i]<-paste(unique(x, split=","), collapse = ',')
-    
-  }
-  
-  l<-unlist(strsplit(demanddata$skill_Dept, split=","))
-  l<-l[l!=""]
-  
-  len<-length(l)
-  
-  add<-data.frame(Characters=character(),Ints=integer())
-  
-  names(add)<-c("city6","nos")
-  
-  print("unique list")
-  a_dummy<-data.frame(l)
-  names(a_dummy)<-"keywords"
-  a_dummy$no_of_searches<-0
-  a_dummy$closely_related_skill_Dice_Insights_Dice_Insights<-0
-  a_dummy$link<-0
-  a_dummy$No_of_job_postings_Indeed<-0
-  a_dummy$Major_Cities<-0
-  a_dummy$company<-0
-  a_dummy$carrerbuildercompanies<-0
-  # By indeed
-  # for (i in 1:len){
-  # d<-gsub(" ", "+", l[i], fixed=TRUE)
-  # if (d=="Cascading+Style+Sheets+(CSS)"){
-  #  d<-gsub("(.*? )", "", a_dummy$l[i])}
-  # url1  <- paste("https://www.indeed.com/jobs?q=",d,"&l=United+States",sep="")
-  # movie<-read_html(url1)
-  # g <- movie %>% html_node(".resultsTop") %>% html_text()
-  # s<-gsub("\n\n.*","",g)
-  # s<-sub('.*of ', '', s)
-  # s<-gsub("\\,", "", s)
-  # a_dummy$no_of_searches[i]<-s
-  # }
-  # print("indeed loop")
-  for (i in 1:len){
-    d<-gsub(" ", "+", l[i], fixed=TRUE)
-    if (d=="Cascading+Style+Sheets+(CSS)"){
-      d<-gsub("(.*? )", "", a_dummy$l[i])}
-    if (d=="c"){d<-"C+C%2B%2B"}
-    if (d=="c++"){d<-"C+C%2B%2B"}
-    if (d=="vc++"){d<-"vc%2B%2B"}
-    if (d=="embedded"){d<-"embedded+system"}
-    if (d=="c#"){d<-"c%23"}
-    
-    url1  <- paste("https://www.indeed.com/jobs?q=",d,"&l=United+States",sep="")
-    movie<-read_html(url1)
-    g <- movie %>% html_node("#searchCount") %>% html_text()
-    #s<-gsub("\n\n.*","",g)
-    s<-sub('.*of ', '', g)
-    s<-gsub("\\,", "", s)
-    
-    a_dummy$no_of_searches[i]<-s
-    
-    #for addition
-    
-    
-    
-    #for location
-    if (d=="c%23"){location<- movie %>% html_node(".rbOpen:nth-child(6)") %>% html_text()
-    }else{
-      location <- movie %>% html_node(".rbOpen:nth-child(8)") %>% html_text()}
-    loc1<-gsub("[A-Za-z]", "", location)
-    loc2<-gsub("\\\n", "", loc1)
-    loc3<-unlist( strsplit(loc2,split=","))
-    loc3<-loc3[loc3!=""]
-    loc4<-gsub("\\ÃÂ»", "", loc3)
-    loc5<-trimws(loc4, which = c("both"))
-    loc6<- (gsub("([0-9]+).*$", "\\1", loc5))
-    loc7<-gsub("\\(", "", loc6)
-    loc7<-loc7[loc7!=""]
-    stop<-length(loc7)
-    a_dummy$No_of_job_postings_Indeed[i]<-paste(loc7, collapse = ",")
-    #for location
-    
-    city1<-gsub("\\\n", "", location)
-    city1<-gsub("[0-9]", "", city1)
-    city2<-gsub("(?i)\\b[a-z]{2}\\b", "", city1, perl=T)
-    city3<-unlist( strsplit(city2,split=","))
-    city4<-gsub("\\()", "", city3)
-    city5<-trimws(city4, which = c("both"))
-    city6<-gsub("\\Location", "", city5)
-    city6<-city6[1:stop]
-    a_dummy$Major_Cities[i]<-paste(city6, collapse = ",")
-    
-    
-    #addition
-    addition<-data.frame(city6)
-    addition$nos<-(loc7)
-    add<-merge(addition,add, all = TRUE)
-    
-    
-    if (d=="c%23"){company<- movie %>% html_node(".rbOpen:nth-child(7)") %>% html_text()
-    }else{
-      company <- movie %>% html_node(".rbOpen:nth-child(9)") %>% html_text()}
-    
-    
-    company1<-gsub("\\\n", "", company)
-    company2<-gsub("[0-9]", ":", company1)
-    company3<-unlist( strsplit(company2,split=":"))
-    company4<-gsub("\\Company", "", company3)
-    company4<-gsub("\\more ÃÂ»", "", company4)
-    company5<-gsub("\\)", "", company4)
-    company6<-gsub("\\(", "", company5)
-    company6<-company6[company6!=""]
-    a_dummy$company[i]<-paste(company6, collapse = ",")
-    
-    # 
-    # d<-gsub(" ", "+AND+", l[i], fixed=TRUE)
-    # url1  <- paste("https://www.dice.com/jobs?q=",d,"&l=&searchid=4644778564551&stst=", sep="")
-    # movie<-read_html(url1)
-    # g <- movie %>% html_node("#posiCountId") %>% html_text()
-    # s<-as.numeric( gsub("\\,", "", g ))
-    # a_dummy$no_of_searches[i]<-s
-    
-    
-    # #for Career builder
-    # b<-gsub(" ", "-", l[i], fixed=TRUE)
-    # if (b=="Cascading+Style+Sheets+(CSS)"){
-    #   b<-gsub("(.*? )", "", a_dummy$l[i])}
-    # if (b=="c"){b<-"C-program"}
-    # 
-    # if (b=="embedded"){b<-"embedded-system"}
-    # 
-    # url1  <- paste("http://www.careerbuilder.com/jobs?keywords=",b,"&location=",sep="")
-    # read_html(curl('http://benchmarkrealestate.com/', handle = new_handle("useragent" = "Mozilla/5.0")))
-    # 
-    # 
-    # movie<-read_html(url1)
-    # g <- movie %>% html_node("#company") %>% html_text()
-    # crr1<-gsub("[0-9]", "", g)
-    # crr2<-gsub("\\()", "-", crr1)
-    # crr2<-gsub("\\All", "", crr2)
-    # lis<-unlist(strsplit(crr2, split="-")) 
-    # a_dummy$carrerbuildercompanies[i]<-paste(lis, collapse = ",")
-    
-    #closest skill module
-    url2  <- paste("https://www.dice.com/skills/",d,".html", sep="")
-    movie2<-read_html(url2)
-    g1 <- movie2 %>% html_node(".col-md-7") %>% html_text()
-    s1<-gsub("\\\t", "", g1)
-    s1<-gsub("\\\n", " ", s1)
-    s1<-gsub("\\Related Skills", "", s1)
-    a_dummy$closely_related_skill_Dice_Insights[i]<-s1
-    a_dummy$link[i]<-url2
-    
-  }
-  
-  print("finished indeed")
-  BE<-aggregate(as.numeric(add$nos),by=list(add$city6), FUN=sum )
-  names(BE)<-c("Location", "nos")
-  BE<-BE[order(as.numeric(BE$nos),decreasing=TRUE),]
-  BE<-head(BE,10)
-  #write.csv(BE,file="head.csv")
-  
-  
-  
-  a_dummy<-a_dummy[order(as.numeric(a_dummy$no_of_searches), decreasing = TRUE), ]
-  a_dummy$no_of_searches<-as.numeric(a_dummy$no_of_searches)
-  a_dummy$Market_availablity<-0
-  a_dummy$Market_availablity[a_dummy$no_of_searches>=80000]<-"Availablity High "
-  a_dummy$Market_availablity[(a_dummy$no_of_searches>=40000)&(a_dummy$no_of_searches<80000)]<-"Availablity High"
-  a_dummy$Market_availablity[(a_dummy$no_of_searches<40000)&(a_dummy$no_of_searches>=22000)]<-"Availablity Medium"
-  a_dummy$Market_availablity[(a_dummy$no_of_searches<22000)&(a_dummy$no_of_searches>=8000)]<-"Availablity Medium"
-  a_dummy$Market_availablity[(a_dummy$no_of_searches<8000)&(a_dummy$no_of_searches>=4000)]<-"Availablity Less"
-  a_dummy$Market_availablity[(a_dummy$no_of_searches<4000)&(a_dummy$no_of_searches>=500)]<-"Availablity Less"
-  a_dummy$Market_availablity[(a_dummy$no_of_searches<500)]<-"More specific/Spelling mistake"
-  #table(a_dummy$Market_availablity)
-  print("a_dummy")
-  
-  # a_dummy<-a_dummy[order(as.numeric(a_dummy$no_of_searches), decreasing = TRUE), ] 
-  # a_dummy$no_of_searches<-as.numeric(a_dummy$no_of_searches)
-  # a_dummy$Market_availablity<-0
-  # a_dummy$Market_availablity[a_dummy$no_of_searches>=3000]<-"Generic -- availablity High"
-  # a_dummy$Market_availablity[(a_dummy$no_of_searches>=2000)&(a_dummy$no_of_searches<3000)]<-"Generic -- availablity Medium"
-  # a_dummy$Market_availablity[(a_dummy$no_of_searches<2000)&(a_dummy$no_of_searches>=1500)]<-"Generic -- availablity Low"
-  # a_dummy$Market_availablity[(a_dummy$no_of_searches<1500)&(a_dummy$no_of_searches>=1000)]<-"Niche Skill -availablity High"
-  # a_dummy$Market_availablity[(a_dummy$no_of_searches<1000)&(a_dummy$no_of_searches>=400)]<-"Niche Skill -availablity Medium"
-  # a_dummy$Market_availablity[(a_dummy$no_of_searches<400)&(a_dummy$no_of_searches>=50)]<-"Niche Skill -availablity Low"
-  # a_dummy$Market_availablity[(a_dummy$no_of_searches<50)]<-"More specific/Spelling mistake"
-  # table(a_dummy$Market_availablity)
-  
-  #write.csv(a_dummy[,c("l","closely_related_skill_Dice_Insights","Market_availablity","city","nos","company")],file = "file.csv")
-  #write.csv(demanddata[,c("L3..L3.","Experience..iExperienceId.","Skillbucket","both", "noofmatchboth","prevorg","skill_Dept","candidateSAP","loc")],file="hybrid2.csv")
-  # 
-  # synonyms<-read.csv("synn.csv")
-  # 
-  # synonyms$Words<-tolower(synonyms$Words)
-  # 
-  # synonyms$Relevant_search_words<-tolower(synonyms$Relevant_search_words)
-  # 
-  # D<-unlist(strsplit(demanddata$Job..Job.[1]," "))
-  # 
-  # D<-append(D,demanddata$Job..Job.[1])
-  # 
-  # D<-D[D!=""]
-  # D<-D[D!="0"]
-  # 
-  # D<-unique(D)
-  # 
-  # j<-length(demanddata)
-  # nrows <-length(D)
-  # 
-  # for (i in 1:nrows){
-  #   h<-tolower(D[i])
-  #   demanddata[,i+j]<-paste( synonyms$Relevant_search_words_or[grepl(h, tolower(synonyms$Words))], collapse = "Or")
-  #   names(demanddata)[i+j]<-h
-  # }
-  
-  
-  #output<-demanddata[,c("L3..L3.","Experience..iExperienceId.","Skillbucket","both", "noofmatchboth","prevorg","skill_Dept","candidateSAP","loc")]
-  
-  #write.csv(demanddata[,c("L3..L3.","Experience..iExperienceId.","Skillbucket","both", "noofmatchboth","prevorg","skill_Dept","candidateSAP","loc", tolower(D))],file="hybrid2.csv")
-  
-  ddd<-a_dummy[,c("keywords","Market_availablity", "closely_related_skill_Dice_Insights", "Major_Cities")]
-  #write.csv(a_dummy, file="hybrid_dummy.csv")
-  colnames(ddd) <- c("Keywords","Job Postings","Boolean Operators","US Cities")
-  return(ddd)
-}
+# manji<- function(skill_bucket, Experience, Customername,Jobfamilyfunction,Designation,skillcatergory,L3, L4,  Band,Sub_band, Personalsubarea){
+#   
+#   #print(skill_bucket)
+#   #setwd("C:\\Users\\Newman\\Documents\\Final demo")
+#   
+#   datasetexp<-read.csv("excel1.csv", stringsAsFactors = FALSE)
+#   datasetexp<-datasetexp[!duplicated(datasetexp$Requistion.No),]
+#   
+#   demanddata = read.xlsx ("for test.xlsm", sheet = 1)
+#   datasetexp$Position<-tolower(datasetexp$Position)
+#   
+#   datasetexp$hybrid<-paste(tolower(datasetexp$Customer.Name), tolower(datasetexp$L1.Name),tolower(datasetexp$L4.Name),  tolower(datasetexp$L2.Name), tolower(datasetexp$L3.Name), tolower(datasetexp$job.family), tolower(datasetexp$Track.Map.1..New.Job.Family.),   tolower(datasetexp$L2.Name), tolower(datasetexp$Customer.Name),tolower(datasetexp$Employee.Band),  tolower(datasetexp$L3.Name),tolower(datasetexp$L4.Name), tolower(datasetexp$SourceName), tolower(datasetexp$vAdditionalRemarks), tolower(datasetexp$experience),tolower(datasetexp$Project.Name),tolower(datasetexp$skills),  tolower(datasetexp$Personal.Sub.Area), tolower(datasetexp$job.family),tolower(datasetexp$job.family.1),tolower(datasetexp$Job.New), tolower(datasetexp$skills), sep=" ")
+#   
+#   datasetexp$skill_consolidated<-paste(datasetexp$Grade.1..AND.,datasetexp$Grade.1..OR., sep = ",")
+#   
+#   demanddata1<-read.csv("demanddata2.csv", stringsAsFactors = FALSE)
+#   names(demanddata)<-names(demanddata1)
+#   
+#   len<-NROW(demanddata)
+#   demanddata$noofmatchesbyL2<-0
+#   demanddata$L2previousjobroles<-0
+#   
+#   
+#   
+#   #demanddata$skill1<-0
+#   #demanddata$skill2<-0
+#   #demanddata$skill2<-gsub("(.*? )", "", demanddata$Skill.Area..Primary...SkillLevel2_P.)
+#   #demanddata$skill1<-gsub("([A-Za-z]+).*", "\\1", demanddata$Skill.Area..Primary...SkillLevel2_P.)
+#   
+#   
+#   demanddata$both<-0
+#   demanddata$noofmatchboth<-0
+#   demanddata$prevorg<-0
+#   
+#   #datasetexp$job.family
+#   demanddata$skill_Dept<-0
+#   demanddata$candidateSAP<-0
+#   demanddata$loc<-0
+#   for (i in 1:len){
+#     
+#     #h<-tolower(as.character(demanddata$L3..L3.[i]))
+#     #data1<-datasetexp[grepl(h, tolower( datasetexp$L3.Name),fixed = TRUE),]
+#     h<-tolower(as.character(skill_bucket))
+#     data<-datasetexp[grepl(h, tolower(datasetexp$Skillbucket ),fixed = TRUE),]
+#     data1<- data
+#     #data1<-data1[!duplicated(data1), ]
+#     
+#     #h<-tolower(as.character(demanddata$Job.Family..iFunctionID.[i]))
+#     #data1<-data1%>%filter(grepl(h, hybrid) )
+#     if (NROW(data1)>0){
+#       # data1$score<-0
+#       # data1$yearofexp<-0
+#       # data1$L1points<-0
+#       # data1$l2points<-0
+#       # data1$iEmpGroupTypepoints<-0
+#       data1$yearofexp<-grepl(tolower(Experience), data1$hybrid)
+#       data1$L1points<-grepl(tolower(L3), data1$hybrid)
+#       data1$L3points<-grepl(tolower(L3), data1$hybrid)
+#       data1$l4ponts<-grepl(tolower(L4), data1$hybrid)
+#       data1$skill_category_points<-grepl(tolower(skillcatergory),data1$hybrid)
+#       data1$customer_points<-grepl(tolower(Customername),data1$hybrid)
+#       data1$Band_points<-grepl(tolower(Band), data1$hybrid)
+#       data1$band_points2<-grepl(tolower(Sub_band),data1$hybrid)
+#       data1$designation_points<-grepl(tolower(Designation),data1$hybrid)
+#       data1$jobfamily_functions<-grepl(tolower(Jobfamilyfunction),data1$hybrid)
+#       data1$job_points<-grepl(tolower(Jobfamilyfunction),data1$hybrid)
+#       data1$sub_areapoints<-grepl(tolower(Personalsubarea),data1$hybrid)             
+#       #data1$iEmpGroupTypepoints<-grepl(tolower(demanddata$EMP.Type_New[i]), data1$hybrid)
+#       data1$Skillbucketpoints<-grepl(tolower(skill_bucket),tolower(data1$Skillbucket), fixed = TRUE)
+#       data1$Skillbucketpoints1<-grepl(tolower(skill_bucket),tolower(data1$Skillbucket), fixed = TRUE)
+#       data1$Skillbucketpoints2<-grepl(tolower(skill_bucket),tolower(data1$Skillbucket), fixed = TRUE)
+#       data1$Skillbucketpoints3<-grepl(tolower(skill_bucket),tolower(data1$Skillbucket), fixed = TRUE)
+#       data1$score<-rowSums(data1[c( "Skillbucketpoints", "Skillbucketpoints1","Skillbucketpoints2","Skillbucketpoints3",  "yearofexp","L1points","L3points","l4ponts","skill_category_points","customer_points","Band_points","band_points2","designation_points","jobfamily_functions","job_points","sub_areapoints")], na.rm=FALSE)
+#       data1<-data1[order(data1$score, decreasing = TRUE), ] 
+#       data1<-head(data1,5)
+#       demanddata$both[i]<-paste(data1$Position,collapse = " OR ")
+#       demanddata$prevorg[i]<-paste(data1$Employer.Name, collapse = " ")
+#       demanddata$skill_Dept[i]<-paste(data1$skill_consolidated, collapse = ",")
+#       demanddata$candidateSAP[i]<-paste(data1$CV.ID, collapse = " ")
+#       demanddata$loc[i]<-paste(data1$Location, collapse = " ")
+#       demanddata$noofmatchboth[i]<-NROW(data1)
+#       
+#     }
+#     
+#     
+#   }
+#   
+#   
+#   #print("scoring_done")
+#   #names(demanddata)
+#   demanddata$skill_Dept<- gsub("\\/", " ", demanddata$skill_Dept)
+#   demanddata$skill_Dept<- gsub("\\-", " ", demanddata$skill_Dept)
+#   
+#   
+#   #demanddata$skill_Dept<- gsub("\\,", " ", demanddata$skill_Dept)
+#   for (i in 1:NROW(demanddata$skill_Dept))
+#   {
+#     x<-unique(unlist(strsplit(tolower(demanddata$skill_Dept[i]), split=",")))
+#     x<-trimws(x, which = c("both"))
+#     demanddata$skill_Dept[i]<-paste(unique(x, split=","), collapse = ',')
+#     
+#   }
+#   
+#   l<-unlist(strsplit(demanddata$skill_Dept, split=","))
+#   l<-l[l!=""]
+#   
+#   len<-length(l)
+#   
+#   add<-data.frame(Characters=character(),Ints=integer())
+#   
+#   names(add)<-c("city6","nos")
+#   
+#   #print("unique list")
+#   a_dummy<-data.frame(l)
+#   names(a_dummy)<-"keywords"
+#   a_dummy$no_of_searches<-0
+#   a_dummy$closely_related_skill_Dice_Insights_Dice_Insights<-0
+#   a_dummy$link<-0
+#   a_dummy$No_of_job_postings_Indeed<-0
+#   a_dummy$Major_Cities<-0
+#   a_dummy$company<-0
+#   a_dummy$carrerbuildercompanies<-0
+#   # By indeed
+#   # for (i in 1:len){
+#   # d<-gsub(" ", "+", l[i], fixed=TRUE)
+#   # if (d=="Cascading+Style+Sheets+(CSS)"){
+#   #  d<-gsub("(.*? )", "", a_dummy$l[i])}
+#   # url1  <- paste("https://www.indeed.com/jobs?q=",d,"&l=United+States",sep="")
+#   # movie<-read_html(url1)
+#   # g <- movie %>% html_node(".resultsTop") %>% html_text()
+#   # s<-gsub("\n\n.*","",g)
+#   # s<-sub('.*of ', '', s)
+#   # s<-gsub("\\,", "", s)
+#   # a_dummy$no_of_searches[i]<-s
+#   # }
+#   # print("indeed loop")
+#   for (i in 1:len){
+#     d<-gsub(" ", "+", l[i], fixed=TRUE)
+#     if (d=="Cascading+Style+Sheets+(CSS)"){
+#       d<-gsub("(.*? )", "", a_dummy$l[i])}
+#     if (d=="c"){d<-"C+C%2B%2B"}
+#     if (d=="c++"){d<-"C+C%2B%2B"}
+#     if (d=="vc++"){d<-"vc%2B%2B"}
+#     if (d=="embedded"){d<-"embedded+system"}
+#     if (d=="c#"){d<-"c%23"}
+#     
+#     url1  <- paste("https://www.indeed.com/jobs?q=",d,"&l=United+States",sep="")
+#     movie<-read_html(url1)
+#     g <- movie %>% html_node("#searchCount") %>% html_text()
+#     #s<-gsub("\n\n.*","",g)
+#     s<-sub('.*of ', '', g)
+#     s<-gsub("\\,", "", s)
+#     
+#     a_dummy$no_of_searches[i]<-s
+#     
+#     #for addition
+#     
+#     
+#     
+#     #for location
+#     if (d=="c%23"){location<- movie %>% html_node(".rbOpen:nth-child(6)") %>% html_text()
+#     }else{
+#       location <- movie %>% html_node(".rbOpen:nth-child(8)") %>% html_text()}
+#     loc1<-gsub("[A-Za-z]", "", location)
+#     loc2<-gsub("\\\n", "", loc1)
+#     loc3<-unlist( strsplit(loc2,split=","))
+#     loc3<-loc3[loc3!=""]
+#     loc4<-gsub("\\ÃÂ»", "", loc3)
+#     loc5<-trimws(loc4, which = c("both"))
+#     loc6<- (gsub("([0-9]+).*$", "\\1", loc5))
+#     loc7<-gsub("\\(", "", loc6)
+#     loc7<-loc7[loc7!=""]
+#     stop<-length(loc7)
+#     a_dummy$No_of_job_postings_Indeed[i]<-paste(loc7, collapse = ",")
+#     #for location
+#     
+#     city1<-gsub("\\\n", "", location)
+#     city1<-gsub("[0-9]", "", city1)
+#     city2<-gsub("(?i)\\b[a-z]{2}\\b", "", city1, perl=T)
+#     city3<-unlist( strsplit(city2,split=","))
+#     city4<-gsub("\\()", "", city3)
+#     city5<-trimws(city4, which = c("both"))
+#     city6<-gsub("\\Location", "", city5)
+#     city6<-city6[1:stop]
+#     a_dummy$Major_Cities[i]<-paste(city6, collapse = ",")
+#     
+#     
+#     #addition
+#     addition<-data.frame(city6)
+#     addition$nos<-(loc7)
+#     add<-merge(addition,add, all = TRUE)
+#     
+#     
+#     if (d=="c%23"){company<- movie %>% html_node(".rbOpen:nth-child(7)") %>% html_text()
+#     }else{
+#       company <- movie %>% html_node(".rbOpen:nth-child(9)") %>% html_text()}
+#     
+#     
+#     company1<-gsub("\\\n", "", company)
+#     company2<-gsub("[0-9]", ":", company1)
+#     company3<-unlist( strsplit(company2,split=":"))
+#     company4<-gsub("\\Company", "", company3)
+#     company4<-gsub("\\more ÃÂ»", "", company4)
+#     company5<-gsub("\\)", "", company4)
+#     company6<-gsub("\\(", "", company5)
+#     company6<-company6[company6!=""]
+#     a_dummy$company[i]<-paste(company6, collapse = ",")
+#     
+#     # 
+#     # d<-gsub(" ", "+AND+", l[i], fixed=TRUE)
+#     # url1  <- paste("https://www.dice.com/jobs?q=",d,"&l=&searchid=4644778564551&stst=", sep="")
+#     # movie<-read_html(url1)
+#     # g <- movie %>% html_node("#posiCountId") %>% html_text()
+#     # s<-as.numeric( gsub("\\,", "", g ))
+#     # a_dummy$no_of_searches[i]<-s
+#     
+#     
+#     # #for Career builder
+#     # b<-gsub(" ", "-", l[i], fixed=TRUE)
+#     # if (b=="Cascading+Style+Sheets+(CSS)"){
+#     #   b<-gsub("(.*? )", "", a_dummy$l[i])}
+#     # if (b=="c"){b<-"C-program"}
+#     # 
+#     # if (b=="embedded"){b<-"embedded-system"}
+#     # 
+#     # url1  <- paste("http://www.careerbuilder.com/jobs?keywords=",b,"&location=",sep="")
+#     # read_html(curl('http://benchmarkrealestate.com/', handle = new_handle("useragent" = "Mozilla/5.0")))
+#     # 
+#     # 
+#     # movie<-read_html(url1)
+#     # g <- movie %>% html_node("#company") %>% html_text()
+#     # crr1<-gsub("[0-9]", "", g)
+#     # crr2<-gsub("\\()", "-", crr1)
+#     # crr2<-gsub("\\All", "", crr2)
+#     # lis<-unlist(strsplit(crr2, split="-")) 
+#     # a_dummy$carrerbuildercompanies[i]<-paste(lis, collapse = ",")
+#     
+#     #closest skill module
+#     url2  <- paste("https://www.dice.com/skills/",d,".html", sep="")
+#     movie2<-read_html(url2)
+#     g1 <- movie2 %>% html_node(".col-md-7") %>% html_text()
+#     s1<-gsub("\\\t", "", g1)
+#     s1<-gsub("\\\n", " ", s1)
+#     s1<-gsub("\\Related Skills", "", s1)
+#     a_dummy$closely_related_skill_Dice_Insights[i]<-s1
+#     a_dummy$link[i]<-url2
+#     
+#   }
+#   
+#   #print("finished indeed")
+#   BE<-aggregate(as.numeric(add$nos),by=list(add$city6), FUN=sum )
+#   names(BE)<-c("Location", "nos")
+#   BE<-BE[order(as.numeric(BE$nos),decreasing=TRUE),]
+#   BE<-head(BE,10)
+#   #write.csv(BE,file="head.csv")
+#   
+#   
+#   
+#   a_dummy<-a_dummy[order(as.numeric(a_dummy$no_of_searches), decreasing = TRUE), ]
+#   a_dummy$no_of_searches<-as.numeric(a_dummy$no_of_searches)
+#   a_dummy$Market_availablity<-0
+#   a_dummy$Market_availablity[a_dummy$no_of_searches>=80000]<-"Availablity High "
+#   a_dummy$Market_availablity[(a_dummy$no_of_searches>=40000)&(a_dummy$no_of_searches<80000)]<-"Availablity High"
+#   a_dummy$Market_availablity[(a_dummy$no_of_searches<40000)&(a_dummy$no_of_searches>=22000)]<-"Availablity Medium"
+#   a_dummy$Market_availablity[(a_dummy$no_of_searches<22000)&(a_dummy$no_of_searches>=8000)]<-"Availablity Medium"
+#   a_dummy$Market_availablity[(a_dummy$no_of_searches<8000)&(a_dummy$no_of_searches>=4000)]<-"Availablity Less"
+#   a_dummy$Market_availablity[(a_dummy$no_of_searches<4000)&(a_dummy$no_of_searches>=500)]<-"Availablity Less"
+#   a_dummy$Market_availablity[(a_dummy$no_of_searches<500)]<-"More specific/Spelling mistake"
+#   #table(a_dummy$Market_availablity)
+#   #print("a_dummy")
+#   
+#   # a_dummy<-a_dummy[order(as.numeric(a_dummy$no_of_searches), decreasing = TRUE), ] 
+#   # a_dummy$no_of_searches<-as.numeric(a_dummy$no_of_searches)
+#   # a_dummy$Market_availablity<-0
+#   # a_dummy$Market_availablity[a_dummy$no_of_searches>=3000]<-"Generic -- availablity High"
+#   # a_dummy$Market_availablity[(a_dummy$no_of_searches>=2000)&(a_dummy$no_of_searches<3000)]<-"Generic -- availablity Medium"
+#   # a_dummy$Market_availablity[(a_dummy$no_of_searches<2000)&(a_dummy$no_of_searches>=1500)]<-"Generic -- availablity Low"
+#   # a_dummy$Market_availablity[(a_dummy$no_of_searches<1500)&(a_dummy$no_of_searches>=1000)]<-"Niche Skill -availablity High"
+#   # a_dummy$Market_availablity[(a_dummy$no_of_searches<1000)&(a_dummy$no_of_searches>=400)]<-"Niche Skill -availablity Medium"
+#   # a_dummy$Market_availablity[(a_dummy$no_of_searches<400)&(a_dummy$no_of_searches>=50)]<-"Niche Skill -availablity Low"
+#   # a_dummy$Market_availablity[(a_dummy$no_of_searches<50)]<-"More specific/Spelling mistake"
+#   # table(a_dummy$Market_availablity)
+#   
+#   #write.csv(a_dummy[,c("l","closely_related_skill_Dice_Insights","Market_availablity","city","nos","company")],file = "file.csv")
+#   #write.csv(demanddata[,c("L3..L3.","Experience..iExperienceId.","Skillbucket","both", "noofmatchboth","prevorg","skill_Dept","candidateSAP","loc")],file="hybrid2.csv")
+#   # 
+#   # synonyms<-read.csv("synn.csv")
+#   # 
+#   # synonyms$Words<-tolower(synonyms$Words)
+#   # 
+#   # synonyms$Relevant_search_words<-tolower(synonyms$Relevant_search_words)
+#   # 
+#   # D<-unlist(strsplit(demanddata$Job..Job.[1]," "))
+#   # 
+#   # D<-append(D,demanddata$Job..Job.[1])
+#   # 
+#   # D<-D[D!=""]
+#   # D<-D[D!="0"]
+#   # 
+#   # D<-unique(D)
+#   # 
+#   # j<-length(demanddata)
+#   # nrows <-length(D)
+#   # 
+#   # for (i in 1:nrows){
+#   #   h<-tolower(D[i])
+#   #   demanddata[,i+j]<-paste( synonyms$Relevant_search_words_or[grepl(h, tolower(synonyms$Words))], collapse = "Or")
+#   #   names(demanddata)[i+j]<-h
+#   # }
+#   
+#   
+#   #output<-demanddata[,c("L3..L3.","Experience..iExperienceId.","Skillbucket","both", "noofmatchboth","prevorg","skill_Dept","candidateSAP","loc")]
+#   
+#   #write.csv(demanddata[,c("L3..L3.","Experience..iExperienceId.","Skillbucket","both", "noofmatchboth","prevorg","skill_Dept","candidateSAP","loc", tolower(D))],file="hybrid2.csv")
+#   
+#   ddd<-a_dummy[,c("keywords","Market_availablity", "closely_related_skill_Dice_Insights", "Major_Cities")]
+#   #write.csv(a_dummy, file="hybrid_dummy.csv")
+#   colnames(ddd) <- c("Keywords","Job Postings","Boolean Operators","US Cities")
+#   return(ddd)
+# }
 
 ###########################################DSM+################################################################
 
 forecaster <- function(skill.input, country){
-  print("Forecasting first")
+  #print("Forecasting first")
   
   #####################################File Information#################################################
   #Created using R version 3.4.1
@@ -1190,10 +1192,10 @@ forecaster <- function(skill.input, country){
         }
         
         #Forecast demand based using arima from the forecast package.
-        ovr.forecast <- forecast(arima(ovr.demandseries, order = c(order$a,0,order$b)), h = 12)
-        ext.forecast <- forecast(arima(ext.demandseries, order = c(order$c,0,order$d)), h = 12)
-        int.forecast <- forecast(arima(int.demandseries, order = c(order$e,0,order$f)), h = 12)
-        tot.forecast <- forecast(arima(tot.demandseries, order = c(order$g,0,order$h)), h = 12)
+        ovr.forecast <- forecast(auto.arima(ovr.demandseries), h = 12)
+        #ext.forecast <- forecast(arima(ext.demandseries, order = c(order$c,0,order$d)), h = 12)
+        #int.forecast <- forecast(arima(int.demandseries, order = c(order$e,0,order$f)), h = 12)
+        #tot.forecast <- forecast(arima(tot.demandseries, order = c(order$g,0,order$h)), h = 12)
         
         # ovr.intermittent.results <- data.frame( month = c("Month 1", "Month 2","Month 3"), Skill = rep(skills.list,3), Seasonal_Naive = c(sum(ovr.forecast$mean[1:4]),sum(ovr.forecast$mean[5:8]),sum(ovr.forecast$mean[9:12])))
         # ovr.results <- rbind(ovr.results, ovr.intermittent.results)
@@ -1208,11 +1210,11 @@ forecaster <- function(skill.input, country){
         # tot.results <- rbind(tot.results, tot.intermittent.results)
         
         #Aggregate the predictions and return.
-        final.results <- data.frame(month = c("Month 1", "Month 2","Month 3"), 
-                                    overall = c(sum(ovr.forecast$mean[1:4]),sum(ovr.forecast$mean[5:8]),sum(ovr.forecast$mean[9:12])), 
-                                    ext = c(sum(ext.forecast$mean[1:4]),sum(ext.forecast$mean[5:8]),sum(ext.forecast$mean[9:12])), 
-                                    int = c(sum(int.forecast$mean[1:4]),sum(int.forecast$mean[5:8]),sum(int.forecast$mean[9:12])), 
-                                    tot = c(sum(tot.forecast$mean[1:4]),sum(tot.forecast$mean[5:8]),sum(tot.forecast$mean[9:12])))
+        final.results <- data.frame(month = c("Month 1"), 
+                                    overall = c(sum(ovr.forecast$mean[1:12])))
+                                    #ext = c(sum(ext.forecast$mean[1:4]),sum(ext.forecast$mean[5:8]),sum(ext.forecast$mean[9:12])), 
+                                    #int = c(sum(int.forecast$mean[1:4]),sum(int.forecast$mean[5:8]),sum(int.forecast$mean[9:12])), 
+                                    #tot = c(sum(tot.forecast$mean[1:4]),sum(tot.forecast$mean[5:8]),sum(tot.forecast$mean[9:12])))
         
         return(final.results)
       }
@@ -1311,8 +1313,7 @@ forecaster <- function(skill.input, country){
         order <- read.csv("order.csv")
         order <- subset(order, order$skill == as.character(skills.list))
         
-        ovr.forecast <- tryCatch(forecast(arima(ovr.demandseries, order = c(order$a,0,order$b)), h = 12), 
-                                 error = function(e) forecast(auto.arima(ovr.demandseries), h = 12))
+        ovr.forecast <- forecast(auto.arima(ovr.demandseries), h = 12)
         
         #ovr.forecast <- forecast(auto.arima(ovr.demandseries), h = 12)
         #ext.forecast <- forecast(arima(ext.demandseries, order = c(order$c,0,order$d)), h = 12)
@@ -1501,7 +1502,7 @@ forecaster <- function(skill.input, country){
   #disp$Fulfillmet.perc <- round((disp$Fufillment/disp$Demand.Forecast)*100)
   #disp$Fulfillmet.perc[is.infinite(disp$Fulfillmet.perc)] <- "Data Not Available"
   
-  print("End Forecst")
+  #print("End Forecst")
   
   #disp$quarter[which(disp$quarter == 1)] <- "Q1 - JFM"
   #disp$quarter[which(disp$quarter == 2)] <- "Q2 - AMJ"
@@ -1538,10 +1539,10 @@ maptable <- function(a,b,c, country){
   #Set the working directory to the Demand folder.
   setwd("C:/HCL/LikeMe/Demand")
   master.demand <- read.csv("dump.csv")
-  print("Start maptsble")
-  print(a)
-  print(b)
-  print(c)
+  #print("Start maptsble")
+  #print(a)
+  #print(b)
+  #print(c)
   demand.area <- master.demand
   demand.area$quarter <- quarter(dmy(demand.area$Approval.Date))
   demand.area$year <- year(dmy(demand.area$Approval.Date))
@@ -1585,7 +1586,7 @@ maptable <- function(a,b,c, country){
   
   #Demand for all the states have been calculated.
   Total <- Total[1:50,]
-  print("stop maptable")
+  #print("stop maptable")
   return(Total)
   
 }
@@ -1608,7 +1609,7 @@ maps <- function(a,b,c, country){
   }
   setwd("C:/HCL/LikeMe/Demand")
   master.demand <- read.csv("dump.csv")
-  print("Start Maps")
+  #print("Start Maps")
   demand.area <- master.demand
   demand.area$quarter <- quarter(dmy(demand.area$Approval.Date))
   demand.area$year <- year(dmy(demand.area$Approval.Date))
@@ -1658,11 +1659,11 @@ maps <- function(a,b,c, country){
   #USAsp <- SpatialPolygonsDataFrame(USApolygons,  data = dat2)
   #spplot(USAsp['value'])
   
-  print("End Maps")
+  #print("End Maps")
   
   forecasting <- function(loca){
     setwd("C:/HCL/LikeMe/Demand")
-    print(loca)
+    #print(loca)
     demand <- read.csv("dump.csv",stringsAsFactors = F)
     
     demand$date <- dmy(demand$Req.Date)
@@ -1713,7 +1714,7 @@ maps <- function(a,b,c, country){
         n <- (n*52)+38
         demand.ts <- tsclean(ts(demand[1:n,]$Demand,frequency = 52))
       }
-      plot(demand.ts)
+      #plot(demand.ts)
       #Acf(demand.ts)
       #Pacf(demand.ts)
       
@@ -1755,7 +1756,7 @@ customer <- function(cid, year, quarter, number){
   
   colnames(customer.together) <- c("Quarter", "Year", "Customer", "Demand")
   
-  ggplot(customer.together[1:10,], aes(Demand)) + geom_bar()
+  #ggplot(customer.together[1:10,], aes(Demand)) + geom_bar()
   
   return(customer.together[1:number,])
   
@@ -1871,7 +1872,7 @@ list_location<- function (customer){
 
 
 customer<-function(input){
-  print ("customer function")
+  #print ("customer function")
   #dd1<-dd
   #colnames(dd1) <-skillname$Skill.names
   #dd1$customer<-demandda$Customer
@@ -1883,14 +1884,14 @@ customer<-function(input){
   plo<- head(datafra,10)
   xform <-list(categoryorder = "array",
                categoryarray = plo$custo)
-  plot_ly(data=plo,x = as.factor(plo$custo), y = plo$total,name = "SF Zoo",type = "bar")%>%layout(xaxis = xform)
-  print ("customer function complete")
+  #plot_ly(data=plo,x = as.factor(plo$custo), y = plo$total,name = "SF Zoo",type = "bar")%>%layout(xaxis = xform)
+  #print ("customer function complete")
   return(plo)                        
 }
 
 newman<-function(input, n, skillbucket, subarea,customer,raio){
-  setwd("C:\\Users\\Newman\\Documents\\Final demo")
-  print("loading datafile")
+  #setwd("C:\\Users\\Newman\\Documents\\Final demo")
+  #print("loading datafile")
   if (input!=""){
     # Data_for<-read.csv("excel.csv")
     # finaltokens<-read.csv("thefile.csv")
@@ -1921,7 +1922,7 @@ newman<-function(input, n, skillbucket, subarea,customer,raio){
     coun<-d[, colSums(d == 0)== 0]
     freq<- length(coun)
     #distmatrix<-read.csv("skillsdf.csv", header= FALSE)
-    print("loading complete")
+    #print("loading complete")
     #skillMatrix<-read.csv("mac.csv")
     # asasa<-tdddataframe["java",]
     # asasa["MICROSOFT CORPORATION"]
@@ -1942,7 +1943,7 @@ newman<-function(input, n, skillbucket, subarea,customer,raio){
     
     if (jd==31049){
       
-      print("using India Distance")
+      #print("using India Distance")
       distmatrix<-indiadistance
     }
     else {
@@ -1954,7 +1955,7 @@ newman<-function(input, n, skillbucket, subarea,customer,raio){
     
     #row.names(distmatrix)<-skillname$Skill.names
     #colnames(distmatrix)<-skillname$Skill.names
-    print("Creating a single column of skill")
+    #print("Creating a single column of skill")
     Skills_new<-as.data.frame(distmatrix[,input])
     str(Skills_new)
     names(Skills_new)<-"dist"
@@ -2042,7 +2043,7 @@ newman<-function(input, n, skillbucket, subarea,customer,raio){
     
     if (jd==31049){
       
-      print("using India Distance")
+      #print("using India Distance")
       distmatrix<-indiadistance
     }
     else {
@@ -2119,14 +2120,14 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   skills <- read.csv("skillClustering.csv", header = TRUE, stringsAsFactors = FALSE)
   stp <- read.csv("stopwords.csv", header = TRUE, stringsAsFactors = FALSE)
   
-  print(skill1)
-  print(job1)
-  print(exp1)
-  print(stype1)
-  print(sk.ill)
-  print(num1)
-  print(clack)
-  print("loading dataset")
+  #print(skill1)
+  #print(job1)
+  #print(exp1)
+  #print(stype1)
+  #print(sk.ill)
+  #print(num1)
+  #print(clack)
+  #print("loading dataset")
   
   if(stype1 == "eser"){
     candidates <- read.csv("external.csv", stringsAsFactors = FALSE)
@@ -2156,7 +2157,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   
   
   
-  print("creating candidate scoring table")
+  #print("creating candidate scoring table")
   #customer <- data.frame(Customer.Name = unique(candidates$Customer.Name), Customer.Flag = seq(1,length(unique(candidates$Customer.Name))))
   #experience <- data.frame(experience = unique(candidates$experience), experience.flag = seq(1,length(unique(candidates$experience))))
   #l2 <- data.frame(L2.Name = unique(candidates$L2.Name), l2.flag = seq(1,length(unique(candidates$L2.Name))))
@@ -2169,7 +2170,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   
   #candidates <-  select(candidates, L2.Name, requirement, Employee.Code)#, Customer.Flag, experience.flag, designation.flag, l2.flag, Employee.Code)
   
-  print("Adding Requirement")
+  #print("Adding Requirement")
   
   if(sk.ill == "I have already entered the skills"){
     new_requirement <- data.frame(X = nrow(candidates)+1,File_Name = "",Mobile.Number = 9999999999,Email = "",Profile = job1, Education = "",Skills = skill1, TProfile = "")
@@ -2187,11 +2188,11 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   
   candidates <- rbind(new_requirement, candidates)
   
-  print("Creating a Bag of Words")
+  #print("Creating a Bag of Words")
   term.frequency <- function(row) {
     
-    print(row)
-    print(sum(row))
+    #print(row)
+    #print(sum(row))
     row / sum(row)
     #0.5+(0.5*(row/max(row)))
     
@@ -2208,8 +2209,8 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   
   
   tf.idf <- function(x, idf) {
-    print(x)
-    print(idf)
+    #print(x)
+    #print(idf)
     x * idf
   }
   
@@ -2255,7 +2256,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   tokens.matrix[tokens.matrix>0]<-1
   tokens.df <- as.data.frame(tokens.matrix)
   
-  print("Creating TF-IDF")
+  #print("Creating TF-IDF")
   # tokens.df <- apply(tokens.matrix, 1, term.frequency)
   # tokens.idf <- apply(tokens.matrix, 2, inverse.doc.freq)
   # tokens.tfidf <-  apply(tokens.df, 2, tf.idf, idf = tokens.idf)
@@ -2280,14 +2281,14 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   
   
   library(lsa)
-  print("Scoring")
+  #print("Scoring")
   start.time <- Sys.time()
   if(nrow(candidates)>1){
     cos <- cosine(tokens)
     cos <- as.data.frame(cos)
     score1 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
     
-    print("Creating output table")
+    #print("Creating output table")
     #score1 <- subset(score1, score<1.0 )
     score1 <- score1[order(score1$score, decreasing = TRUE),]
     names <- data.frame(File = original$File_Name, Email = original$Email, Mobile.Number = original$Email, Skill = original$Skills)
@@ -2334,7 +2335,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
     #tokens.matrix[tokens.matrix>0]<-1
     tokens.df <- as.data.frame(tokens.matrix)
     
-    print("Creating TF-IDF")
+    #print("Creating TF-IDF")
     tokens.df <- apply(tokens.matrix, 1, term.frequency)
     tokens.idf <- apply(tokens.matrix, 2, inverse.doc.freq)
     if(length(tokens.idf)>1){
@@ -2363,14 +2364,14 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
     
     
     library(lsa)
-    print("Scoring")
+    #print("Scoring")
     start.time <- Sys.time()
     if(nrow(candidates)>1){
       cos <- cosine(tokens)
       cos <- as.data.frame(cos)
       score2 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
       
-      print("Creating output table")
+      #print("Creating output table")
       #score2 <- subset(score2, Score<1.0)
       score2 <- score2[order(score2$score, decreasing = TRUE),]
       names <- data.frame(File = original$File_Name,Email = original$Email, Mobile.Number = original$Email, Skill = original$Skills)
@@ -2425,7 +2426,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
     #tokens.matrix[tokens.matrix>0]<-1
     tokens.df <- as.data.frame(tokens.matrix)
     
-    print("Creating TF-IDF")
+    #print("Creating TF-IDF")
     tokens.df <- apply(tokens.matrix, 1, term.frequency)
     tokens.idf <- apply(tokens.matrix, 2, inverse.doc.freq)
     tokens.tfidf <-  apply(tokens.df, 2, tf.idf, idf = tokens.idf)
@@ -2453,7 +2454,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
       cos <- as.data.frame(cos)
       score <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
       
-      print("Creating output table")
+      #print("Creating output table")
       #score2 <- subset(score2, Score<1.0)
       score <- score[order(score$score, decreasing = TRUE),]
       names <- data.frame(File = original$File_Name,Email = original$Email, Mobile.Number = original$Email, Skill = original$Skills)
@@ -2571,8 +2572,8 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   }
   #score1$cumulative <- NULL
   #score1$`Employee Code` <- NULL
-  print("Return Table")
-  print(score1)
+  #print("Return Table")
+  #print(score1)
   return(score1)
 }
 
@@ -2716,20 +2717,17 @@ candidate_recommendation <- function(j){
     
     skills <- read.csv("skillClustering.csv", header = TRUE, stringsAsFactors = FALSE)
     stp <- read.csv("stopwords.csv", header = TRUE, stringsAsFactors = FALSE)
+    setwd("C:/HCL/LikeMe/Resumes/External")
+    candidates <- read.csv("external.csv", stringsAsFactors = FALSE)
+    original <-  read.csv("external.csv", stringsAsFactors = FALSE)
     
-    candidates <- read.csv("excel.csv", stringsAsFactors = FALSE)
-    original <-  read.csv("excel.csv", stringsAsFactors = FALSE)
-    
-    candidates$requirement <- paste(candidates$skills, candidates$vAdditionalRemarks)
+    candidates$requirement <- paste(candidates$Skills, candidates$TProfile)
     
     
-    candidates <-  select(candidates, L2.Name, requirement, Employee.Code)#, Customer.Flag, experience.flag, designation.flag, l2.flag, Employee.Code)
+    candidates <-  select(candidates,File_Name, Skills, TProfile, requirement)#, Customer.Flag, experience.flag, designation.flag, l2.flag, Employee.Code)
     
-    print("Adding Requirement")
-    new_requirement <- data.frame(L2.Name = "ERS-PTS", skills = "skill", vAdditionalRemarks = "requirement", 
-                                  Customer.Name = "AT&T Mobility LLC", vCurrentDesignation = "TEST LEAD",
-                                  experience = "5-7 Years", Job.Description = "To create| assign and track the project [module] work plans for delivery and also provide technical guidance for work completion.",
-                                  Employee.Code = 9999, requirement = rqrmt)
+    #print("Adding Requirement")
+    new_requirement <- data.frame(File_Name = "999999",Skills = "sndmnvs",TProfile = "sajshdb", requirement = rqrmt)
     #new_requirement$requirement <- new_requirement$rqrmt
     
     #new_requirement <- left_join(new_requirement, customer, by = "Customer.Name")
@@ -2737,11 +2735,11 @@ candidate_recommendation <- function(j){
     #new_requirement <- left_join(new_requirement, l2, by = "L2.Name")
     #new_requirement <- left_join(new_requirement, designation, by = "vCurrentDesignation")
     
-    new_requirement <-  select(new_requirement, L2.Name, requirement,Employee.Code)#, Customer.Flag, experience.flag, designation.flag, l2.flag, Employee.Code)
+    new_requirement <-  select(new_requirement,File_Name, Skills,TProfile,  requirement)#, Customer.Flag, experience.flag, designation.flag, l2.flag, Employee.Code)
     
     candidates <- rbind(new_requirement, candidates)
     
-    print("Creating a Bag of Words")
+    #print("Creating a Bag of Words")
     term.frequency <- function(row) {
       
       row / sum(row)
@@ -2802,7 +2800,7 @@ candidate_recommendation <- function(j){
     tokens.matrix <- as.matrix(tokens.dfm)
     tokens.df <- as.data.frame(tokens.matrix)
     
-    print("Creating TF-IDF")
+    #print("Creating TF-IDF")
     tokens.df <- apply(tokens.matrix, 1, term.frequency)
     tokens.idf <- apply(tokens.matrix, 2, inverse.doc.freq)
     tokens.tfidf <-  apply(tokens.df, 2, tf.idf, idf = tokens.idf)
@@ -2827,20 +2825,20 @@ candidate_recommendation <- function(j){
     
     
     library(lsa)
-    print("Scoring")
+    #print("Scoring")
     start.time <- Sys.time()
     if(nrow(candidates)>1){
       cos <- cosine(tokens)
       cos <- as.data.frame(cos)
-      score1 <- data.frame(Employee.Code = candidates$Employee.Code, score = cos$text1)
+      score1 <- data.frame(File_Name = candidates$File_Name, score = cos$text1)
       
-      print("Creating output table")
+      #print("Creating output table")
       #score1 <- subset(score1, score<1.0 )
       score1 <- score1[order(score1$score, decreasing = TRUE),]
-      names <- data.frame(Employee.Code = original$Employee.Code, Name = original$Employee.Name, skill = original$skills, experience = original$experience, previous.employer = original$Customer.Name)
-      score1 <- left_join(score1, names, by = "Employee.Code")
+      names <- data.frame(File_Name = original$File_Name, Name = original$Full_Name, skill = original$Skills, experience = original$Years.Exp, previous.employer = original$TProfile)
+      score1 <- left_join(score1, names, by = "File_Name")
       #score1 <- score1[1:5,]
-      colnames(score1) <- c("Employee Code", "Score", "Candidate Name", "Skills"," Experience", "Current Employer")
+      colnames(score1) <- c("File Name", "Score", "Candidate Name", "Skills"," Experience", "Current Employer")
       #which.max(profile)
       #score1$Score <- NULL
       if(nrow(score1)==0){
@@ -2867,7 +2865,7 @@ candidate_recommendation <- function(j){
     tokens.matrix <- as.matrix(tokens.dfm)
     tokens.df <- as.data.frame(tokens.matrix)
     
-    print("Creating TF-IDF")
+    #print("Creating TF-IDF")
     tokens.df <- apply(tokens.matrix, 1, term.frequency)
     tokens.idf <- apply(tokens.matrix, 2, inverse.doc.freq)
     tokens.tfidf <-  apply(tokens.df, 2, tf.idf, idf = tokens.idf)
@@ -2892,18 +2890,18 @@ candidate_recommendation <- function(j){
     
     
     library(lsa)
-    print("Scoring")
+    #print("Scoring")
     start.time <- Sys.time()
     if(nrow(candidates)>1){
       cos <- cosine(tokens)
       cos <- as.data.frame(cos)
-      score2 <- data.frame(Employee.Code = candidates$Employee.Code, score = cos$text1)
+      score2 <- data.frame(File_Name = candidates$File_Name, score = cos$text1)
       
-      print("Creating output table")
+      #print("Creating output table")
       #score2 <- subset(score2, Score<1.0)
       score2 <- score2[order(score2$score, decreasing = TRUE),]
-      names <- data.frame(Employee.Code = original$Employee.Code, Name = original$Employee.Name, skill = original$skills, experience = original$experience, previous.employer = original$Customer.Name)
-      score2 <- left_join(score2, names, by = "Employee.Code")
+      names <- data.frame(File_Name = original$File_Name, Name = original$Full_Name, skill = original$Skills, experience = original$Years.Exp, previous.employer = original$TProfile)
+      score2 <- left_join(score2, names, by = "File_Name")
       #score1 <- score1[1:5,]
       colnames(score2) <- c("Employee Code", "Score", "Candidate Name", "Skills"," Experience", "Current Employer")
       #which.max(profile)
@@ -2930,7 +2928,7 @@ candidate_recommendation <- function(j){
   
   
   
-  demand$int.names <- lapply(demand$rqrmt,function (x) unlist( recommendations(x)))
+    demand$int.names <- lapply(demand$rqrmt,function (x) unlist( recommendations(x)))
   demand$int.names <- vapply(demand$int.names, paste, collapse = ", ", character(1L))
   demand$ext.names <- lapply(demand$rqrmt,function (x) unlist( recommendations(x)))
   demand$ext.names <- vapply(demand$ext.names, paste, collapse = ", ", character(1L))
@@ -2960,7 +2958,7 @@ ui <- dashboardPage(#skin = "blue",
       menuItem("About", tabName = "about"),
       menuItem("Like - Me", menuSubItem("Skill Radar", tabName = "skill", icon = icon("puzzle-piece")),
                menuSubItem("Job Board Search", tabName = "search3", icon = icon("search")),
-               menuSubItem("Content Based Search", tabName = "search1", icon = icon("search")),
+               #menuSubItem("Content Based Search", tabName = "search1", icon = icon("search")),
                menuSubItem("Context Based Search", tabName = "search2", icon = icon("search-plus")),
                menuSubItem("Candidate Radar", tabName = "reco", icon = icon("search-plus")),icon = icon("id-card")
       ),
@@ -3087,6 +3085,9 @@ ui <- dashboardPage(#skin = "blue",
                           ),
                   tabItem(tabName = "skill",
                           tags$h1("Skill Radar"),
+                          tags$h3("Data : 31049 Job descriptions (Jan 2016 to Aug 2017)"),
+                          tags$h4("Results available for 582 Customers,33 Skill buckets,
+65 different locations,2835 Technological keywords and all their combinations "),
                           fluidRow(
                             box(
                               title = "Select the skill and the radar range",
@@ -3116,7 +3117,7 @@ ui <- dashboardPage(#skin = "blue",
                               status = "danger",
                               solidHeader = TRUE,
                               collapsible = TRUE,
-                              tableOutput("skills3")
+                              dataTableOutput("skills3")
                               
                             ),
                             # box(
@@ -3130,30 +3131,30 @@ ui <- dashboardPage(#skin = "blue",
                             
                             
                           )),
-                  tabItem(tabName = "search1",
-                          tags$h1("Content Based Search"),
-                          fluidRow(
-                            box(
-                              title = "Skill is a mandatory field.",
-                              status = "danger",
-                              solidHeader = TRUE,
-                              collapsible = TRUE,
-                              selectInput("skills1","Select Skill",choices = unique(datasetexp$Skillbucket)), 
-                              selectInput("Experience","Select Experience",choices =refer$Years), 
-                              selectInput("Customer","Select customer",choices =refer$Customer),
-                              selectInput("Job_family","Select Jobfamily",choices =refer$Job.family.function),
-                              selectInput("Designation","Select Designation",choices =refer$Designation),
-                              selectInput("Skill_category","Select Category",choices =refer$Skill.category),
-                              selectInput("L2","Select L2",choices =refer$L2),
-                              selectInput("L3","Select L3",choices =refer$L3),
-                              selectInput("Band","Select Band",choices =refer$Band),
-                              selectInput("Sub_band","Select sub band",choices =refer$Subband),
-                              selectInput("Personal_subarea","Select sub area",choices =refer$Sub_area),
-                              actionButton(inputId = "go5",label = "generate Keywords",color="red")
-                            ),
-                            mainPanel( DT::dataTableOutput("results1"))
-                            
-                          )),
+                  # tabItem(tabName = "search1",
+                  #         tags$h1("Content Based Search"),
+                  #         fluidRow(
+                  #           box(
+                  #             title = "Skill is a mandatory field.",
+                  #             status = "danger",
+                  #             solidHeader = TRUE,
+                  #             collapsible = TRUE,
+                  #             selectInput("skills1","Select Skill",choices = unique(datasetexp$Skillbucket)), 
+                  #             selectInput("Experience","Select Experience",choices =refer$Years), 
+                  #             selectInput("Customer","Select customer",choices =refer$Customer),
+                  #             selectInput("Job_family","Select Jobfamily",choices =refer$Job.family.function),
+                  #             selectInput("Designation","Select Designation",choices =refer$Designation),
+                  #             selectInput("Skill_category","Select Category",choices =refer$Skill.category),
+                  #             selectInput("L2","Select L2",choices =refer$L2),
+                  #             selectInput("L3","Select L3",choices =refer$L3),
+                  #             selectInput("Band","Select Band",choices =refer$Band),
+                  #             selectInput("Sub_band","Select sub band",choices =refer$Subband),
+                  #             selectInput("Personal_subarea","Select sub area",choices =refer$Sub_area),
+                  #             actionButton(inputId = "go5",label = "generate Keywords",color="red")
+                  #           ),
+                  #           mainPanel( DT::dataTableOutput("results1"))
+                  #           
+                  #         )),
                   tabItem(tabName = "search2",
                           tags$h1("Context Based Search"),
                           fluidRow(
@@ -3172,7 +3173,7 @@ ui <- dashboardPage(#skin = "blue",
                               textAreaInput("systems", "What are the system requirements?"),
                               #textAreaInput("composition", "What are the composition requirements?"),
                               selectInput("exp", "Experience", choices = c("No Preference",unique(datasetexp$experience)[c(1:6,8)])),
-                              selectInput("clack","Select Customer",choices = unique(demandda$Customer)),
+                              selectInput("clack","Select Customer",choices = c(" ",unique(demandda$Customer))),
                               actionButton(inputId = "go", label = "Find Profiles")
                             ),
                             
@@ -3441,7 +3442,7 @@ fulfillment.location <- function(skill){
   # ylab(paste("Average fulfillment percentage for",skill))+
   #theme(axis.text.x = element_text(angle = 90, hjust = 1))
   #plot_ly(data=master.skill.initial.customer,x = as.factor(master.skill.initial.customer$Group.1),y = master.skill.initial.customer$x,   type = "bar")
-  print(master.skill.initial.customer)
+  #print(master.skill.initial.customer)
   return(master.skill.initial.customer)                                                                                                        
 }
 
@@ -3778,7 +3779,9 @@ server <- function(input, output, session) {
     )
     plot_ly(z = data3()$Demand, text = data3()$State, locations = state.abb,
             type = 'choropleth', locationmode = 'USA-states') %>%
-      layout(geo = g)
+      layout(geo = g) 
+    
+      
   })
   
   #Plot to display statistics about location.
@@ -3933,8 +3936,8 @@ server <- function(input, output, session) {
     
   })
   
-  output$skills3 <- renderTable({
-    data.frame(Boolean=paste(colnames(data.frame(data4()[1])),collapse = ","))
+  output$skills3 <- renderDataTable({
+    datatable( data.frame(Boolean=paste(colnames(data.frame(data4()[1], check.names = FALSE)),collapse = ",")))
   })
   #newmanvalue box like e radar
   output$frequency <- renderValueBox({
@@ -3955,4 +3958,5 @@ server <- function(input, output, session) {
   
 }
 
+print(Sys.time()-start)
 shinyApp(ui = ui, server = server)
