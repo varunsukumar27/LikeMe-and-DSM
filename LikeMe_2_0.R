@@ -59,6 +59,659 @@ cons$week <- quarter(cons$date)
 cons$year <- year(cons$date)
 dem <- cons
 
+
+##################################################Newmancodes##########################################
+
+#####Like Me Fuctions for first module: Skill Radar
+
+#Function for automatic filtering of the UI input with respect to customer
+
+list_customer<- function (customer){
+  
+  if (customer!=""){
+    f<- as.data.frame( dd1[dd1$customer==customer,-1])
+    d<-f[, colSums(f != 0) > 0]
+    skill_list<-colnames(d) } #returns the skill list that correspond to the input customer
+  
+  else {
+    skill_list<-c("",as.character(unique(colnames(dd1))))  
+  }
+  
+  return(skill_list)  
+  
+}
+
+#Function for automatic filtering of the UI input with respect to skill
+
+act_customer<- function (skill){
+  
+  if (skill!=""){
+    cust_list<- c("", as.character(unique( dd1$customer[ dd1[,skill]>0])))
+  }
+  
+  else {
+    cust_list<-c("",as.character(unique((demandda$Customer))))  
+  }
+  return (cust_list)#returns the customer list that correspond to the input skil
+}
+
+#Function for automatic filtering of the UI input with respect to skill
+
+act_skill<- function (skill){
+  
+  if (skill!=""){
+    cust_list<- c("", as.character(unique( demandda$Skill.Bucket[ dd1[,skill]>0])))
+  }
+  
+  else {
+    cust_list<-c("",as.character(unique((demandda$Skill.Bucket))))  
+  }
+  return (cust_list)#returns the skill bucket list that correspond to the input skil
+}
+
+#Function for automatic filtering of the UI input with respect to skill
+
+act_location<- function (skill){
+  
+  if (skill!=""){
+    cust_list<- c("", as.character(unique( demandda$Personal.SubArea[ dd1[,skill]>0])))
+  }
+  
+  else {
+    cust_list<-c("",as.character(unique((demandda$Personal.SubArea))))  
+  }
+  return (cust_list)#returns the subarea  list that correspond to the input skil
+}
+
+#Function for automatic filtering of the UI input with respect to customer
+
+list_skillbucket<- function (customer){
+  
+  if (customer!=""){
+    
+    skill_list<-unique(demandda$Skill.Bucket[demandda$Customer==customer])
+  }
+  
+  else {
+    skill_list<-c("",as.character(unique(demandda$Skill.Bucket)))  
+  }
+  
+  return(skill_list)  #returns the skill bucket list that correspond to the input customer
+  
+}
+
+#Function for automatic filtering of the UI input with respect to customer
+list_location<- function (customer){
+  
+  if(customer!=""){
+    
+    skill_list<-unique(demandda$Personal.SubArea[demandda$Customer==customer])
+  }
+  
+  else {
+    skill_list<-c("",as.character(unique(demandda$Personal.SubArea)))  
+  }
+  
+  return(skill_list)  #returns the subarea list that correspond to the input customer
+  
+}
+
+
+#Function for Skill radar computes distance by Pearson corelation and makes out the radar 
+
+newman<-function(input, n, skillbucket, subarea,customer,raio){
+  
+  # Only if Skill is  mentioned by the user compute the closest skills 
+  if (input!=""){
+    
+    #Receiving all the user input and filtering the job descriptions 
+    A<-1:nrow(demandda)
+    if (customer!=""){
+      A<-which(demandda$Customer == customer)}
+    B<-1:nrow(demandda)
+    if (subarea!=""){
+      B<-which(demandda$Personal.SubArea == subarea)}
+    C<-1:nrow(demandda)
+    if (skillbucket!="") {
+      C<-which(demandda$Skill.Bucket==skillbucket)}
+    
+    D<-intersect(A,B)
+    E<-intersect(D,C)
+    tdddataframe<-as.data.frame(tdddataframe[,E]) #Final filtered table
+    row.names(tdddataframe)<-skill
+    
+    #Adding an additional empty column
+    no<-length(tdddataframe)+1
+    tdddataframe[,no]<-0
+    d<- tdddataframe[input,]
+    #TO know how the total frequency of the word in all the job decsriptions
+    coun<-d[, colSums(d == 0)== 0]
+    freq<- length(coun)
+    
+    #Computing distance using Pearson's Correlation.
+    dista <- function(x) ((1-cor(t(x)))/2)
+    jd<-length(tdddataframe)-1
+    
+    #if no filters are applied to the dataframe then use the correlation matrix uploaded
+    if (jd==31049){
+      
+      #print("using India Distance")
+      distmatrix<-indiadistance
+    }
+    #Compution of the Pearson correlation between the skills for the filtered matrix
+    else {
+      d1 <- dista(tdddataframe)
+      distmatrix<-as.data.frame(d1)    
+    }
+    
+    
+    #Seperate out the disatnce  of input  
+    Skills_new<-as.data.frame(distmatrix[,input])
+    str(Skills_new)
+    names(Skills_new)<-"dist"
+    Skills_new$skills<-skill
+    
+    #apply the threshold
+    data1<-Skills_new$skills[(Skills_new$dist<=0.5)]
+    data2<-head( (Skills_new[order(Skills_new$dist, decreasing=FALSE),]),n)
+    data2<- data2[data2$skills!=input,]
+    data<-intersect(data1,data2$skills)
+    
+    data2<-data2[is.element(data2$skills,data),]
+    data2<- data2[order(data2$dist, decreasing=FALSE),]
+    data2$dist<-as.numeric(lapply(data2$dist, function(x) 1-x)) #distance computation by perason colrrelation
+    
+    #Preparation of the table for displaying in Radar format
+    d<-max(data2$dist)+0.02
+    data2$max<-d
+    f<-min(data2$dist)-0.02
+    data2$min<-f
+    data3<-data2[c(4,3,1)]
+    tra<-data.frame(t(data3))
+    
+    names(tra)<- data2$skills
+    
+    
+    return(list(tra, jd, freq))
+  }
+  # Only if Skill is not  mentioned by the user instead uses only customer/skill bucket/area
+  else {
+    #Receiving all the user input and filtering the job descriptions
+    A<-1:nrow(demandda)
+    if (customer!=""){
+      A<-which(demandda$Customer == customer)}
+    B<-1:nrow(demandda)
+    if (subarea!=""){
+      B<-which(demandda$Personal.SubArea == subarea)}
+    C<-1:nrow(demandda)
+    if (skillbucket!="") {
+      C<-which(demandda$Skill.Bucket==skillbucket)}
+    
+    D<-intersect(A,B)
+    E<-intersect(D,C)
+    tdddataframe<-as.data.frame(tdddataframe[,E])
+    row.names(tdddataframe)<-skill
+    #Adding a row for a reference with all 1s 
+    addition<-nrow(tdddataframe)+1
+    tdddataframe[addition,]<-1
+    #Adding an additional empty column to allow for the computation of statdard deviation 
+    no<-length(tdddataframe)+1
+    tdddataframe[,no]<-0
+    
+    freq<- length(tdddataframe)-1
+    
+    #Computing distance using Pearson's Correlation.
+    dista <- function(x) ((1-cor(t(x)))/2)
+    
+    jd<-length(tdddataframe)-1
+    #if no filters are applied to the dataframe then use the correlation matrix uploaded    
+    if (jd==31049){
+      
+      #print("using India Distance")
+      distmatrix<-indiadistance
+    }
+    else {
+      d1 <- dista(tdddataframe)
+      distmatrix<-as.data.frame(d1)   #computing Perason's correlation 
+      
+    }
+    #Seperate out the disatnce  of the referece vector to the skills  
+    Skills_new<-as.data.frame(distmatrix[,addition])
+    str(Skills_new)
+    names(Skills_new)<-"dist"
+    Skills_new$skills<-row.names(tdddataframe)
+    
+    #apply the threshold
+    data1<-Skills_new$skills[which(Skills_new$dist<=0.5)]
+    data2<-head( (Skills_new[order(Skills_new$dist, decreasing=FALSE),]),n)
+    data2<- data2[data2$skills!=addition,]
+    data<-intersect(data1,data2$skills)
+    
+    data2<-data2[is.element(data2$skills,data),]
+    data2<- data2[order(data2$dist, decreasing=FALSE),]
+    data2$dist<-as.numeric(lapply(data2$dist, function(x) 1-x))#distance computation
+   
+    #preparation of the table for the radar output
+    d<-max(data2$dist)+0.02
+    data2$max<-d
+    f<-min(data2$dist)-0.02
+    data2$min<-f
+    data3<-data2[c(4,3,1)]
+    tra<-data.frame(t(data3))
+    
+    names(tra)<- data2$skills
+    
+    return(list(tra, jd, freq))
+    
+  }
+  
+  
+  
+  
+}
+
+#retrieve the alternatie skills  
+alter<-function (name){
+  
+  return(alternatives$alternate[alternatives$Skillname==name])
+}
+#retrieve the definition
+defin<-function (name){
+  
+  return(alternatives$definition[alternatives$Skillname==name])
+}
+
+
+
+##############################################Contextual Search################################
+likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, systems){    
+  
+  
+  setwd("C:/HCL/LikeMe")
+  
+  library(dplyr)
+  library(lubridate)
+  library(stringr)
+  library(caret)
+  library(quanteda)
+  
+  skills <- read.csv("skillClustering.csv", header = TRUE, stringsAsFactors = FALSE)
+  stp <- read.csv("stopwords.csv", header = TRUE, stringsAsFactors = FALSE)
+  
+  #reading the candidate profiles from internal and external databases as per the user input
+  if(stype1 == "eser"){
+    candidates <- read.csv("external.csv", stringsAsFactors = FALSE)
+    original <-  read.csv("external.csv", stringsAsFactors = FALSE)
+    if(sk.ill == "I have already entered the skills"){
+      candidates$requirement <- candidates$Profile#Add the skills
+    }else{
+      candidates$requirement <- paste("",candidates$Profile )
+    }
+  }else if(stype1 == "iser"){
+    candidates <- read.csv("internal.csv", stringsAsFactors = FALSE)
+    original <-  read.csv("internal.csv", stringsAsFactors = FALSE) 
+    if(sk.ill == "I have already entered the skills"){
+      candidates$requirement <- candidates$Profile#Add the skills
+    }else{
+      candidates$requirement <- paste("",candidates$Profile )
+    }
+  }
+  
+  if(exp1 == "No Preference"){
+    candidates <- candidates
+    original <- original
+  }else{
+    candidates <- subset(candidates, candidates$experience == exp1)
+    original <- subset(original, original$experience == exp1)
+  }
+  
+  
+  if(sk.ill == "I have already entered the skills"){
+    new_requirement <- data.frame(X = nrow(candidates)+1,File_Name = "",Mobile.Number = 9999999999,Email = "",Profile = job1, Education = "",Skills = skill1, TProfile = "")
+    new_requirement$requirement <- paste(new_requirement$Skills, new_requirement$Profile)
+  }else{
+    new_requirement <- data.frame(X = nrow(candidates)+1,File_Name = "",Mobile.Number = 999999999,Email = "",  Profile = job1, Education = "",Skills = paste(colnames(newman(sk.ill, num1, "","",clack)),collapse = ","), TProfile = "")
+    new_requirement$requirement <- paste(new_requirement$Skills, new_requirement$Profile)
+  }
+  
+  
+  candidates <- rbind(new_requirement, candidates)
+  
+  #functions for tf idf computation
+  term.frequency <- function(row) {
+    
+    row / sum(row)
+    
+  }
+  
+  
+  inverse.doc.freq <- function(col) {
+    corpus.size <- length(col)
+    doc.count <- length(which(col > 0))
+    
+    log10(corpus.size / doc.count)
+  }
+  
+  
+  
+  tf.idf <- function(x, idf) {
+    x * idf
+  }
+  
+  candidates$TProfile <- as.character(candidates$TProfile)
+  candidates$TProfile[1] <- skill1
+  
+  #tokenisation of the profiles
+  
+  tokens <- tokens(as.character(new_requirement$Skills), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
+  tokens <- tokens_tolower(tokens)
+  
+  
+  tokens <- tokens_select(tokens, stp$TEXT, selection = "remove")
+  
+  train.tokens.dfm <- dfm(tokens, tolower = FALSE)
+  
+  tokens <- tokens_wordstem(tokens, language = "english")
+  
+  tokens <- tokens_ngrams(tokens, n = 1)
+  
+  skills.tokens <- tokens(skills$value, what = "word", remove_numbers = TRUE, remove_punct = TRUE)
+  skills.tokens <- tokens_tolower(skills.tokens)
+  skills.tokens <- tokens_select(skills.tokens, stp$TEXT, selection = "remove")
+  skills.tokens <- tokens_ngrams(skills.tokens, n = 1:5)
+  skills.tokens <- tokens_select(tokens, unlist(as.list(skills.tokens)), selection = "keep")
+  skills.tokens <- tokens_select(skills.tokens, stopwords(), selection = "remove")
+  tokens.set <- append(tokens, skills.tokens)
+  tokens1 <- tokens(as.character(candidates$TProfile), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
+  tokens1 <- tokens_tolower(tokens1)
+  tokens1 <- tokens_select(tokens1, stopwords(), selection = "remove")
+  tokens1 <- tokens_ngrams(tokens1, n = 1)
+  
+  tokens1 <- tokens_select(tokens1, unlist(as.list(tokens)), selection = "keep")
+  
+  tokens.dfm <- dfm(tokens1, tolower = FALSE)
+  tokens.matrix <- as.matrix(tokens.dfm)
+  
+  tokens.matrix[tokens.matrix>0]<-1
+  tokens.df <- as.data.frame(tokens.matrix)
+  
+  
+  tokens <- as.matrix(tokens.df)
+  
+  tokens <- t(tokens)
+  
+  
+  library(lsa)
+  start.time <- Sys.time()
+  if(nrow(candidates)>1){
+    
+    #Finding Cosine Similarity.
+    cos <- cosine(tokens)
+    cos <- as.data.frame(cos)
+    score1 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
+    
+    score1 <- score1[order(score1$score, decreasing = TRUE),]
+    names <- data.frame(File = original$File_Name, Email = original$Email, Mobile.Number = original$Email, Skill = original$Skills)
+    score1 <- left_join(score1, names, by = "File")
+    colnames(score1) <- c("File","Mobile.Number", "Email", "Score", "em"," em1","Skill")
+    if(nrow(score1)==0){
+      score1 <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
+    }
+  }else{
+    score1 <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
+  }
+  total.time <- Sys.time() - start.time
+  total.time
+  score1$Score[is.nan(score1$Score)] <- 0
+  score1 <- score1[order(score1$Email, decreasing = TRUE),]
+  
+  if(grepl("^\\s*$", job1)){
+    score2 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, Score = rep(0,nrow(candidates)))
+  }else{
+    tokens1 <- tokens(candidates$requirement, what = "word", remove_numbers = TRUE, remove_punct = TRUE)
+    tokens1 <- tokens_tolower(tokens1)
+    tokens1 <- tokens_select(tokens1, stopwords(), selection = "remove")
+    new.tokens <- tokens(as.character(new_requirement$Profile), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
+    new.tokens <- tokens_tolower(new.tokens)
+    new.tokens <- tokens_select(new.tokens, stopwords(), selection = "remove")
+    new.tokens <- tokens_ngrams(new.tokens, n = 1:5)
+    tokens1 <- tokens_ngrams(tokens1, n = 1:5)
+    
+    tokens1 <- tokens_select(tokens1, unlist(as.list(new.tokens)), selection = "keep")
+    new.tokens1 <- tokens(as.character(new_requirement$Skills), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
+    new.tokens1 <- tokens_tolower(new.tokens1)
+    new.tokens1 <- tokens_select(new.tokens1, stopwords(), selection = "remove")
+    new.tokens1 <- tokens_ngrams(new.tokens1, n = 1:5)
+    tokens1 <- tokens_select(tokens1, unlist(as.list(new.tokens1)), selection = "remove")
+    
+    tokens.dfm <- dfm(tokens1, tolower = FALSE)
+    tokens.matrix <- as.matrix(tokens.dfm)
+    tokens.df <- as.data.frame(tokens.matrix)
+    
+    tokens.df <- apply(tokens.matrix, 1, term.frequency)
+    tokens.idf <- apply(tokens.matrix, 2, inverse.doc.freq)
+    if(length(tokens.idf)>1){
+      tokens.tfidf <-  apply(tokens.df, 2, tf.idf, idf = tokens.idf)
+    }else{
+      tokens.tfidf <- tokens.df*tokens.idf
+    }
+    tokens.tfidf <- t(tokens.tfidf)
+    incomplete.cases <- which(!complete.cases(tokens.tfidf))
+    tokens.tfidf[incomplete.cases,] <- rep(0.0, ncol(tokens.tfidf))
+    tokens.df <- as.data.frame(tokens.tfidf)
+    
+    tokens <- as.matrix(tokens.df)
+    
+    tokens <- t(tokens)
+    
+    library(lsa)
+    start.time <- Sys.time()
+    if(nrow(candidates)>1){
+      cos <- cosine(tokens)
+      cos <- as.data.frame(cos)
+      score2 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
+      score2 <- score2[order(score2$score, decreasing = TRUE),]
+      names <- data.frame(File = original$File_Name,Email = original$Email, Mobile.Number = original$Email, Skill = original$Skills)
+      score2 <- left_join(score2, names, by = "File")
+      colnames(score2) <- c("File","Mobile.Number", "Email", "Score", "em"," em1","Skill")
+      if(nrow(score2)==0){
+        score2 <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
+      }
+    }else{
+      score2 <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
+    }
+    total.time <- Sys.time() - start.time
+    total.time
+    
+    score2$Score[is.nan(score2$Score)] <- 0
+    score2 <- score2[order(score2$Email, decreasing = TRUE),]
+  }
+  score1$scores <- score2$Score
+  score1$cumulative <- score1$Score+score1$scores
+  scoring <- function(candidates, context){
+    candidates$Profile <- as.character(candidates$Profile)
+    candidates$Profile[1] <- context
+    
+    tokens1 <- tokens(candidates$Profile, what = "word", remove_numbers = TRUE, remove_punct = TRUE)
+    tokens1 <- tokens_tolower(tokens1)
+    tokens1 <- tokens_select(tokens1, stopwords(), selection = "remove")
+    new.tokens <- tokens(as.character(context), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
+    new.tokens <- tokens_tolower(new.tokens)
+    new.tokens <- tokens_select(new.tokens, stopwords(), selection = "remove")
+    new.tokens <- tokens_ngrams(new.tokens, n = 1:5)
+    tokens1 <- tokens_ngrams(tokens1, n = 1:5)
+    
+    tokens1 <- tokens_select(tokens1, unlist(as.list(new.tokens)), selection = "keep")
+    
+    tokens.dfm <- dfm(tokens1, tolower = FALSE)
+    tokens.matrix <- as.matrix(tokens.dfm)
+    tokens.df <- as.data.frame(tokens.matrix)
+    tokens.df <- apply(tokens.matrix, 1, term.frequency)
+    tokens.idf <- apply(tokens.matrix, 2, inverse.doc.freq)
+    tokens.tfidf <-  apply(tokens.df, 2, tf.idf, idf = tokens.idf)
+    tokens.tfidf <- t(tokens.tfidf)
+    incomplete.cases <- which(!complete.cases(tokens.tfidf))
+    tokens.tfidf[incomplete.cases,] <- rep(0.0, ncol(tokens.tfidf))
+    tokens.df <- as.data.frame(tokens.tfidf)
+    
+    tokens <- as.matrix(tokens.df)
+    
+    tokens <- t(tokens)
+    
+    if(nrow(candidates)>1){
+      cos <- cosine(tokens)
+      cos <- as.data.frame(cos)
+      score <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
+      score <- score[order(score$score, decreasing = TRUE),]
+      names <- data.frame(File = original$File_Name,Email = original$Email, Mobile.Number = original$Email, Skill = original$Skills)
+      score <- score[,c(1,4)]
+      if(nrow(score)==0){
+        score <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
+      }
+    }else{
+      score <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
+    }
+    
+    return(score)
+  }
+  
+  if(grepl("^\\s*$", functional)){
+    functional_score <- data.frame(File = score1$File, score = rep(0,nrow(score1)))
+  }else{
+    functional_score <- scoring(candidates, functional)
+  }
+  if(grepl("^\\s*$", systems)){
+    systems_score <- data.frame(File = score1$File, score = rep(0,nrow(score1)))
+  }else{
+    systems_score <- scoring(candidates, systems)
+  }
+  
+  score1 <- left_join(score1,functional_score,by = 'File')
+  score1 <- left_join(score1,systems_score,by = 'File')
+  
+  score1$cscores <- score1$score.x+score1$score.y
+  score1$cumulative <- score1$cumulative+score1$cscores
+  score1 <- score1[order(score1$cumulative, decreasing = TRUE),]
+  score1 <- subset(score1, score1$File!="")
+  score1 <- subset(score1, score1$Score>0.5)
+  score1$Mob <- NULL
+  score1$Skill<-NULL
+  colnames(score1) <- c("File","Mobile Number","Email","Skill Score         (Out of 1)", 
+                        "Skill","em","Context Score        (Out of 1)",
+                        "Cumulative Score          (Out of 5)",
+                        "Functional Score          (Out of 1)",
+                        "Systems Score          (Out of 1)",
+                        "FSC Score          (Out of 3)")
+  score1$Skill<-NULL
+  score1$em<-NULL
+  score1 <- score1[1:5,]
+  score1$`Skill Score         (Out of 1)` <- round(score1$`Skill Score         (Out of 1)`, digits = 2)
+  score1$`Context Score        (Out of 1)` <- round(as.numeric(score1$`Context Score        (Out of 1)`), digits = 2)
+  score1$`Cumulative Score          (Out of 5)` <- round(as.numeric(score1$`Cumulative Score          (Out of 5)`), digits = 2)
+  score1$`Functional Score          (Out of 1)`<- round(as.numeric(score1$`Functional Score          (Out of 1)`),digits = 2)
+  score1$`Systems Score          (Out of 1)`<- round(as.numeric(score1$`Systems Score          (Out of 1)`),digits = 2)
+  score1$`FSC Score          (Out of 3)`<- round(as.numeric(score1$`FSC Score          (Out of 3)`),digits = 2)
+  if(grepl("^\\s*$", job1)){
+    score1$`Context Score        (Out of 1)`<-NULL
+  }
+  if(grepl("^\\s*$", functional)){
+    score1$`Functional Score          (Out of 1)`<-NULL
+  }
+  if(grepl("^\\s*$", systems)){
+    score1$`Systems Score          (Out of 1)`<-NULL
+  }
+  if(grepl("^\\s*$", functional) & grepl("^\\s*$", systems) ){
+    score1$`FSC Score          (Out of 3)`<- NULL
+  }
+  if(grepl("^\\s*$", functional) & grepl("^\\s*$", systems)  & grepl("^\\s*$", job1)){
+    score1$`Cumulative Score          (Out of 5)`<- NULL
+  }
+  
+  if(nrow(score1)>0){
+    tokens <- tokens(as.character(new_requirement$Skills), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
+    tokens <- tokens_tolower(tokens)
+    tokens <- tokens_select(tokens, stp$TEXT, selection = "remove")
+    train.tokens.dfm <- dfm(tokens, tolower = FALSE)
+    tokens <- tokens_wordstem(tokens, language = "english")
+    tokens <- tokens_ngrams(tokens, n = 1)
+    
+    tokens1 <- tokens(as.character(candidates$TProfile), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
+    tokens1 <- tokens_tolower(tokens1)
+    tokens1 <- tokens_select(tokens1, stopwords(), selection = "remove")
+    tokens1 <- tokens_ngrams(tokens1, n = 1)
+    
+    skilltokens <- list()
+    aaa <- character(0)
+    for(i in 1:nrow(candidates)){
+      if(!identical(aaa,unlist(tokens1[i]))){
+        skilltokens[i] <- paste(tokens_select(tokens, unlist(as.list(tokens1[i])), selection = "remove"),collapse = ",")
+      }else{
+        skilltokens[i]<-"" 
+      }
+    }
+    
+    score3 <- data.frame(File = candidates$File_Name, Skills.not.present = unlist(skilltokens))
+    
+    
+    
+    score1 <- left_join(score1, score3, by = "File")
+  }
+  return(score1)
+}
+
+######################################Like me - Job board search#################################################
+#Function to search the job board for alternative skills.
+jobboard<-function(skill1,skill2,skill3) {
+  
+  #Receiving all the inputs as a list
+  l<-{}
+  l<-append(l,skill1)
+  l<-append(l,skill2)
+  l<-append(l,skill3)
+  l<-l[l!=""]
+  
+  len<-length(l)
+  
+  
+  #creation of a dataframe
+  a_dummy<-data.frame(l)
+  names(a_dummy)<-"keywords"
+  a_dummy$no_of_searches<-0
+  a_dummy$closely_related_skill_Dice_Insights_Dice_Insights<-0
+  a_dummy$link<-0
+  
+  #web scrapping from dice insights
+  for (i in 1:len){
+    d<-gsub(" ", "+", l[i], fixed=TRUE)
+    if (d=="Cascading+Style+Sheets+(CSS)"){
+      d<-gsub("(.*? )", "", a_dummy$l[i])}
+    if (d=="c"){d<-"C+C%2B%2B"}
+    if (d=="c++"){d<-"C+C%2B%2B"}
+    if (d=="vc++"){d<-"vc%2B%2B"}
+    if (d=="embedded"){d<-"embedded+system"}
+    if (d=="c#"){d<-"c%23"}
+    
+    #closest skill module
+    url2  <- paste("https://www.dice.com/skills/",d,".html", sep="")
+    movie2<-read_html(url2)
+    g1 <- movie2 %>% html_node(".col-md-7") %>% html_text()
+    s1<-gsub("\\\t", "", g1)
+    s1<-gsub("\\\n", " ", s1)
+    s1<-gsub("\\Related Skills", "", s1)
+    a_dummy$closely_related_skill_Dice_Insights[i]<-s1
+    a_dummy$link[i]<-url2
+    
+  }
+  
+  
+  ddd<-a_dummy[,c("keywords", "closely_related_skill_Dice_Insights")]
+  
+  
+  return(ddd)
+}
+
+
+
 ############################################Customer Forecast#################################################
 #Function used to forecast the demand for customer
 cust.forecast <- function(a,b,c, country){
@@ -305,57 +958,6 @@ combopred <- function(a,b,c, country){
   }
   return(Total)
 }    
-
-##############################################Keyword Search############################################
-#Function to search the job board for alternative skills.
-jobboard<-function(skill1,skill2,skill3) {
-  
-  l<-{}
-  l<-append(l,skill1)
-  l<-append(l,skill2)
-  l<-append(l,skill3)
-  l<-l[l!=""]
-  
-  len<-length(l)
-  
-  add<-data.frame(Characters=character(),Ints=integer())
-  
-  names(add)<-c("city6","nos")
-  
-  a_dummy<-data.frame(l)
-  names(a_dummy)<-"keywords"
-  a_dummy$no_of_searches<-0
-  a_dummy$closely_related_skill_Dice_Insights_Dice_Insights<-0
-  a_dummy$link<-0
-  
-  for (i in 1:len){
-    d<-gsub(" ", "+", l[i], fixed=TRUE)
-    if (d=="Cascading+Style+Sheets+(CSS)"){
-      d<-gsub("(.*? )", "", a_dummy$l[i])}
-    if (d=="c"){d<-"C+C%2B%2B"}
-    if (d=="c++"){d<-"C+C%2B%2B"}
-    if (d=="vc++"){d<-"vc%2B%2B"}
-    if (d=="embedded"){d<-"embedded+system"}
-    if (d=="c#"){d<-"c%23"}
-  
-    #closest skill module
-    url2  <- paste("https://www.dice.com/skills/",d,".html", sep="")
-    movie2<-read_html(url2)
-    g1 <- movie2 %>% html_node(".col-md-7") %>% html_text()
-    s1<-gsub("\\\t", "", g1)
-    s1<-gsub("\\\n", " ", s1)
-    s1<-gsub("\\Related Skills", "", s1)
-    a_dummy$closely_related_skill_Dice_Insights[i]<-s1
-    a_dummy$link[i]<-url2
-    
-  }
-  
-  
-  ddd<-a_dummy[,c("keywords", "closely_related_skill_Dice_Insights")]
-  
-  
-  return(ddd)
-}
 
 
 ###########################################DSM+################################################################
@@ -1058,581 +1660,6 @@ customer <- function(cid, year, quarter, number){
   
 }
 
-##################################################Newmancodes##########################################
-
-#Function for automatic filtering of the UI input
-list_customer<- function (customer){
-  
-  if (customer!=""){
-    f<- as.data.frame( dd1[dd1$customer==customer,-1])
-    d<-f[, colSums(f != 0) > 0]
-    skill_list<-colnames(d) }
-  
-  else {
-    skill_list<-c("",as.character(unique(colnames(dd1))))  
-  }
-  
-  return(skill_list)  
-  
-}
-
-#Function for automatic filtering of the UI input
-
-act_customer<- function (skill){
-  
-  if (skill!=""){
-    cust_list<- c("", as.character(unique( dd1$customer[ dd1[,skill]>0])))
-  }
-  
-  else {
-    cust_list<-c("",as.character(unique((demandda$Customer))))  
-  }
-  return (cust_list)
-}
-
-#Function for automatic filtering of the UI input
-
-act_skill<- function (skill){
-  
-  if (skill!=""){
-    cust_list<- c("", as.character(unique( demandda$Skill.Bucket[ dd1[,skill]>0])))
-  }
-  
-  else {
-    cust_list<-c("",as.character(unique((demandda$Skill.Bucket))))  
-  }
-  return (cust_list)
-}
-
-#Function for automatic filtering of the UI input
-
-act_location<- function (skill){
-  
-  if (skill!=""){
-    cust_list<- c("", as.character(unique( demandda$Personal.SubArea[ dd1[,skill]>0])))
-  }
-  
-  else {
-    cust_list<-c("",as.character(unique((demandda$Personal.SubArea))))  
-  }
-  return (cust_list)
-}
-
-#Function for automatic filtering of the UI input
-
-list_skillbucket<- function (customer){
-  
-  if (customer!=""){
-    
-    skill_list<-unique(demandda$Skill.Bucket[demandda$Customer==customer])
-  }
-  
-  else {
-    skill_list<-c("",as.character(unique(demandda$Skill.Bucket)))  
-  }
-  
-  return(skill_list)  
-  
-}
-
-#Function for automatic filtering of the UI input
-list_location<- function (customer){
-  
-  if(customer!=""){
-    
-    skill_list<-unique(demandda$Personal.SubArea[demandda$Customer==customer])
-  }
-  
-  else {
-    skill_list<-c("",as.character(unique(demandda$Personal.SubArea)))  
-  }
-  
-  return(skill_list)  
-  
-}
-
-
-#Function for Skill radar computes distance by Pearson corelation and makes out the radar 
-
-newman<-function(input, n, skillbucket, subarea,customer,raio){
-  
-  if (input!=""){
-   
-    A<-1:nrow(demandda)
-    if (customer!=""){
-      A<-which(demandda$Customer == customer)}
-    B<-1:nrow(demandda)
-    if (subarea!=""){
-      B<-which(demandda$Personal.SubArea == subarea)}
-    C<-1:nrow(demandda)
-    if (skillbucket!="") {
-      C<-which(demandda$Skill.Bucket==skillbucket)}
-    
-    D<-intersect(A,B)
-    E<-intersect(D,C)
-    tdddataframe<-as.data.frame(tdddataframe[,E])
-    row.names(tdddataframe)<-skill
-   
-    no<-length(tdddataframe)+1
-    tdddataframe[,no]<-0
-    d<- tdddataframe[input,]
-    coun<-d[, colSums(d == 0)== 0]
-    freq<- length(coun)
-    
-    #Computing distance using Pearson's Correlation.
-    dista <- function(x) ((1-cor(t(x)))/2)
-    jd<-length(tdddataframe)-1
-    
-    if (jd==31049){
-      
-      #print("using India Distance")
-      distmatrix<-indiadistance
-    }
-    else {
-      d1 <- dista(tdddataframe)
-      distmatrix<-as.data.frame(d1)    
-    }
-    
-    
-    
-    Skills_new<-as.data.frame(distmatrix[,input])
-    str(Skills_new)
-    names(Skills_new)<-"dist"
-    Skills_new$skills<-skill
-    
-    data1<-Skills_new$skills[(Skills_new$dist<=0.5)]
-    data2<-head( (Skills_new[order(Skills_new$dist, decreasing=FALSE),]),n)
-    data2<- data2[data2$skills!=input,]
-    data<-intersect(data1,data2$skills)
-    
-    data2<-data2[is.element(data2$skills,data),]
-    data2<- data2[order(data2$dist, decreasing=FALSE),]
-    data2$dist<-as.numeric(lapply(data2$dist, function(x) 1-x))
-    d<-max(data2$dist)+0.02
-    data2$max<-d
-    f<-min(data2$dist)-0.02
-    data2$min<-f
-    data3<-data2[c(4,3,1)]
-    tra<-data.frame(t(data3))
-    
-    names(tra)<- data2$skills
-    
-   
-    return(list(tra, jd, freq))
-  }
-  
-  else {
-    A<-1:nrow(demandda)
-    if (customer!=""){
-      A<-which(demandda$Customer == customer)}
-    B<-1:nrow(demandda)
-    if (subarea!=""){
-      B<-which(demandda$Personal.SubArea == subarea)}
-    C<-1:nrow(demandda)
-    if (skillbucket!="") {
-      C<-which(demandda$Skill.Bucket==skillbucket)}
-    
-    D<-intersect(A,B)
-    E<-intersect(D,C)
-    tdddataframe<-as.data.frame(tdddataframe[,E])
-    row.names(tdddataframe)<-skill
-    
-    addition<-nrow(tdddataframe)+1
-    tdddataframe[addition,]<-1
-    
-    no<-length(tdddataframe)+1
-    tdddataframe[,no]<-0
-  
-    freq<- length(tdddataframe)-1
-    
-    #Computing distance using Pearson's Correlation.
-    dista <- function(x) ((1-cor(t(x)))/2)
-    
-    jd<-length(tdddataframe)-1
-    
-    if (jd==31049){
-      
-      #print("using India Distance")
-      distmatrix<-indiadistance
-    }
-    else {
-      d1 <- dista(tdddataframe)
-      distmatrix<-as.data.frame(d1)    
-      
-    }
-    Skills_new<-as.data.frame(distmatrix[,addition])
-    str(Skills_new)
-    names(Skills_new)<-"dist"
-    Skills_new$skills<-row.names(tdddataframe)
-    
-    data1<-Skills_new$skills[which(Skills_new$dist<=0.5)]
-    data2<-head( (Skills_new[order(Skills_new$dist, decreasing=FALSE),]),n)
-    data2<- data2[data2$skills!=addition,]
-    data<-intersect(data1,data2$skills)
-    
-    data2<-data2[is.element(data2$skills,data),]
-    data2<- data2[order(data2$dist, decreasing=FALSE),]
-    data2$dist<-as.numeric(lapply(data2$dist, function(x) 1-x))
-    d<-max(data2$dist)+0.02
-    data2$max<-d
-    f<-min(data2$dist)-0.02
-    data2$min<-f
-    data3<-data2[c(4,3,1)]
-    tra<-data.frame(t(data3))
-    
-    names(tra)<- data2$skills
-    
-    return(list(tra, jd, freq))
-    
-  }
-  
-  
-  
-  
-}
-
-alter<-function (name){
-  
-  return(alternatives$alternate[alternatives$Skillname==name])
-}
-
-defin<-function (name){
-  
-  return(alternatives$definition[alternatives$Skillname==name])
-}
-
-
-
-##############################################Contextual Search################################
-likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, systems){    
-  
-  
-  setwd("C:/HCL/LikeMe")
-  
-  library(dplyr)
-  library(lubridate)
-  library(stringr)
-  library(caret)
-  library(quanteda)
-
-  skills <- read.csv("skillClustering.csv", header = TRUE, stringsAsFactors = FALSE)
-  stp <- read.csv("stopwords.csv", header = TRUE, stringsAsFactors = FALSE)
-  
-
-  if(stype1 == "eser"){
-    candidates <- read.csv("external.csv", stringsAsFactors = FALSE)
-    original <-  read.csv("external.csv", stringsAsFactors = FALSE)
-    if(sk.ill == "I have already entered the skills"){
-      candidates$requirement <- candidates$Profile#Add the skills
-    }else{
-      candidates$requirement <- paste("",candidates$Profile )
-    }
-  }else if(stype1 == "iser"){
-    candidates <- read.csv("internal.csv", stringsAsFactors = FALSE)
-    original <-  read.csv("internal.csv", stringsAsFactors = FALSE) 
-    if(sk.ill == "I have already entered the skills"){
-      candidates$requirement <- candidates$Profile#Add the skills
-    }else{
-      candidates$requirement <- paste("",candidates$Profile )
-    }
-  }
-  
-  if(exp1 == "No Preference"){
-    candidates <- candidates
-    original <- original
-  }else{
-    candidates <- subset(candidates, candidates$experience == exp1)
-    original <- subset(original, original$experience == exp1)
-  }
-  
-
-  if(sk.ill == "I have already entered the skills"){
-    new_requirement <- data.frame(X = nrow(candidates)+1,File_Name = "",Mobile.Number = 9999999999,Email = "",Profile = job1, Education = "",Skills = skill1, TProfile = "")
-    new_requirement$requirement <- paste(new_requirement$Skills, new_requirement$Profile)
-  }else{
-    new_requirement <- data.frame(X = nrow(candidates)+1,File_Name = "",Mobile.Number = 999999999,Email = "",  Profile = job1, Education = "",Skills = paste(colnames(newman(sk.ill, num1, "","",clack)),collapse = ","), TProfile = "")
-    new_requirement$requirement <- paste(new_requirement$Skills, new_requirement$Profile)
-  }
-
-  candidates <- rbind(new_requirement, candidates)
-  
-  term.frequency <- function(row) {
-    
-    row / sum(row)
-
-  }
-  
-  
-  inverse.doc.freq <- function(col) {
-    corpus.size <- length(col)
-    doc.count <- length(which(col > 0))
-    
-    log10(corpus.size / doc.count)
-  }
-  
-  
-  
-  tf.idf <- function(x, idf) {
-    x * idf
-  }
-  
-  candidates$TProfile <- as.character(candidates$TProfile)
-  candidates$TProfile[1] <- skill1
-  tokens <- tokens(as.character(new_requirement$Skills), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
-  tokens <- tokens_tolower(tokens)
-  
-  
-  tokens <- tokens_select(tokens, stp$TEXT, selection = "remove")
-  
-  train.tokens.dfm <- dfm(tokens, tolower = FALSE)
-  
-  tokens <- tokens_wordstem(tokens, language = "english")
-  
-  tokens <- tokens_ngrams(tokens, n = 1)
-  
-  skills.tokens <- tokens(skills$value, what = "word", remove_numbers = TRUE, remove_punct = TRUE)
-  skills.tokens <- tokens_tolower(skills.tokens)
-  skills.tokens <- tokens_select(skills.tokens, stp$TEXT, selection = "remove")
-  skills.tokens <- tokens_ngrams(skills.tokens, n = 1:5)
-  skills.tokens <- tokens_select(tokens, unlist(as.list(skills.tokens)), selection = "keep")
-  skills.tokens <- tokens_select(skills.tokens, stopwords(), selection = "remove")
-  tokens.set <- append(tokens, skills.tokens)
-  tokens1 <- tokens(as.character(candidates$TProfile), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
-  tokens1 <- tokens_tolower(tokens1)
-  tokens1 <- tokens_select(tokens1, stopwords(), selection = "remove")
-  tokens1 <- tokens_ngrams(tokens1, n = 1)
-  
-  tokens1 <- tokens_select(tokens1, unlist(as.list(tokens)), selection = "keep")
-  
-  tokens.dfm <- dfm(tokens1, tolower = FALSE)
-  tokens.matrix <- as.matrix(tokens.dfm)
-  
-  tokens.matrix[tokens.matrix>0]<-1
-  tokens.df <- as.data.frame(tokens.matrix)
-  
-  
-  tokens <- as.matrix(tokens.df)
-  
-  tokens <- t(tokens)
-  
-  
-  library(lsa)
-  start.time <- Sys.time()
-  if(nrow(candidates)>1){
-   
-    #Finding Cosine Similarity.
-    cos <- cosine(tokens)
-    cos <- as.data.frame(cos)
-    score1 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
-    
-    score1 <- score1[order(score1$score, decreasing = TRUE),]
-    names <- data.frame(File = original$File_Name, Email = original$Email, Mobile.Number = original$Email, Skill = original$Skills)
-    score1 <- left_join(score1, names, by = "File")
-    colnames(score1) <- c("File","Mobile.Number", "Email", "Score", "em"," em1","Skill")
-    if(nrow(score1)==0){
-      score1 <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
-    }
-  }else{
-    score1 <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
-  }
-  total.time <- Sys.time() - start.time
-  total.time
-  score1$Score[is.nan(score1$Score)] <- 0
-  score1 <- score1[order(score1$Email, decreasing = TRUE),]
-  
-  if(grepl("^\\s*$", job1)){
-    score2 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, Score = rep(0,nrow(candidates)))
-  }else{
-    tokens1 <- tokens(candidates$requirement, what = "word", remove_numbers = TRUE, remove_punct = TRUE)
-    tokens1 <- tokens_tolower(tokens1)
-    tokens1 <- tokens_select(tokens1, stopwords(), selection = "remove")
-    new.tokens <- tokens(as.character(new_requirement$Profile), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
-    new.tokens <- tokens_tolower(new.tokens)
-    new.tokens <- tokens_select(new.tokens, stopwords(), selection = "remove")
-    new.tokens <- tokens_ngrams(new.tokens, n = 1:5)
-    tokens1 <- tokens_ngrams(tokens1, n = 1:5)
-    
-    tokens1 <- tokens_select(tokens1, unlist(as.list(new.tokens)), selection = "keep")
-    new.tokens1 <- tokens(as.character(new_requirement$Skills), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
-    new.tokens1 <- tokens_tolower(new.tokens1)
-    new.tokens1 <- tokens_select(new.tokens1, stopwords(), selection = "remove")
-    new.tokens1 <- tokens_ngrams(new.tokens1, n = 1:5)
-    tokens1 <- tokens_select(tokens1, unlist(as.list(new.tokens1)), selection = "remove")
-    
-    tokens.dfm <- dfm(tokens1, tolower = FALSE)
-    tokens.matrix <- as.matrix(tokens.dfm)
-    tokens.df <- as.data.frame(tokens.matrix)
-    
-    tokens.df <- apply(tokens.matrix, 1, term.frequency)
-    tokens.idf <- apply(tokens.matrix, 2, inverse.doc.freq)
-    if(length(tokens.idf)>1){
-      tokens.tfidf <-  apply(tokens.df, 2, tf.idf, idf = tokens.idf)
-    }else{
-      tokens.tfidf <- tokens.df*tokens.idf
-    }
-    tokens.tfidf <- t(tokens.tfidf)
-    incomplete.cases <- which(!complete.cases(tokens.tfidf))
-    tokens.tfidf[incomplete.cases,] <- rep(0.0, ncol(tokens.tfidf))
-    tokens.df <- as.data.frame(tokens.tfidf)
-    
-    tokens <- as.matrix(tokens.df)
-    
-    tokens <- t(tokens)
-  
-    library(lsa)
-    start.time <- Sys.time()
-    if(nrow(candidates)>1){
-      cos <- cosine(tokens)
-      cos <- as.data.frame(cos)
-      score2 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
-      score2 <- score2[order(score2$score, decreasing = TRUE),]
-      names <- data.frame(File = original$File_Name,Email = original$Email, Mobile.Number = original$Email, Skill = original$Skills)
-      score2 <- left_join(score2, names, by = "File")
-      colnames(score2) <- c("File","Mobile.Number", "Email", "Score", "em"," em1","Skill")
-      if(nrow(score2)==0){
-        score2 <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
-      }
-    }else{
-      score2 <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
-    }
-    total.time <- Sys.time() - start.time
-    total.time
-    
-    score2$Score[is.nan(score2$Score)] <- 0
-    score2 <- score2[order(score2$Email, decreasing = TRUE),]
-  }
-  score1$scores <- score2$Score
-  score1$cumulative <- score1$Score+score1$scores
-  scoring <- function(candidates, context){
-    candidates$Profile <- as.character(candidates$Profile)
-    candidates$Profile[1] <- context
-    
-    tokens1 <- tokens(candidates$Profile, what = "word", remove_numbers = TRUE, remove_punct = TRUE)
-    tokens1 <- tokens_tolower(tokens1)
-    tokens1 <- tokens_select(tokens1, stopwords(), selection = "remove")
-    new.tokens <- tokens(as.character(context), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
-    new.tokens <- tokens_tolower(new.tokens)
-    new.tokens <- tokens_select(new.tokens, stopwords(), selection = "remove")
-    new.tokens <- tokens_ngrams(new.tokens, n = 1:5)
-    tokens1 <- tokens_ngrams(tokens1, n = 1:5)
-    
-    tokens1 <- tokens_select(tokens1, unlist(as.list(new.tokens)), selection = "keep")
-    
-    tokens.dfm <- dfm(tokens1, tolower = FALSE)
-    tokens.matrix <- as.matrix(tokens.dfm)
-    tokens.df <- as.data.frame(tokens.matrix)
-    tokens.df <- apply(tokens.matrix, 1, term.frequency)
-    tokens.idf <- apply(tokens.matrix, 2, inverse.doc.freq)
-    tokens.tfidf <-  apply(tokens.df, 2, tf.idf, idf = tokens.idf)
-    tokens.tfidf <- t(tokens.tfidf)
-    incomplete.cases <- which(!complete.cases(tokens.tfidf))
-    tokens.tfidf[incomplete.cases,] <- rep(0.0, ncol(tokens.tfidf))
-    tokens.df <- as.data.frame(tokens.tfidf)
-    
-    tokens <- as.matrix(tokens.df)
-    
-    tokens <- t(tokens)
-    
-    if(nrow(candidates)>1){
-      cos <- cosine(tokens)
-      cos <- as.data.frame(cos)
-      score <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
-      score <- score[order(score$score, decreasing = TRUE),]
-      names <- data.frame(File = original$File_Name,Email = original$Email, Mobile.Number = original$Email, Skill = original$Skills)
-      score <- score[,c(1,4)]
-      if(nrow(score)==0){
-        score <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
-      }
-    }else{
-      score <- data.frame(NO = character(), MATCHING = character(), PROFILE = character(), FOUND = character())
-    }
-    
-    return(score)
-  }
-  
-  if(grepl("^\\s*$", functional)){
-    functional_score <- data.frame(File = score1$File, score = rep(0,nrow(score1)))
-  }else{
-    functional_score <- scoring(candidates, functional)
-  }
-  if(grepl("^\\s*$", systems)){
-    systems_score <- data.frame(File = score1$File, score = rep(0,nrow(score1)))
-  }else{
-    systems_score <- scoring(candidates, systems)
-  }
-  
-  score1 <- left_join(score1,functional_score,by = 'File')
-  score1 <- left_join(score1,systems_score,by = 'File')
-  
-  score1$cscores <- score1$score.x+score1$score.y
-  score1$cumulative <- score1$cumulative+score1$cscores
-  score1 <- score1[order(score1$cumulative, decreasing = TRUE),]
-  score1 <- subset(score1, score1$File!="")
-  score1 <- subset(score1, score1$Score>0.5)
-  score1$Mob <- NULL
-  score1$Skill<-NULL
-  colnames(score1) <- c("File","Mobile Number","Email","Skill Score         (Out of 1)", 
-                        "Skill","em","Context Score        (Out of 1)",
-                        "Cumulative Score          (Out of 5)",
-                        "Functional Score          (Out of 1)",
-                        "Systems Score          (Out of 1)",
-                        "FSC Score          (Out of 3)")
-  score1$Skill<-NULL
-  score1$em<-NULL
-  score1 <- score1[1:5,]
-  score1$`Skill Score         (Out of 1)` <- round(score1$`Skill Score         (Out of 1)`, digits = 2)
-  score1$`Context Score        (Out of 1)` <- round(as.numeric(score1$`Context Score        (Out of 1)`), digits = 2)
-  score1$`Cumulative Score          (Out of 5)` <- round(as.numeric(score1$`Cumulative Score          (Out of 5)`), digits = 2)
-  score1$`Functional Score          (Out of 1)`<- round(as.numeric(score1$`Functional Score          (Out of 1)`),digits = 2)
-  score1$`Systems Score          (Out of 1)`<- round(as.numeric(score1$`Systems Score          (Out of 1)`),digits = 2)
-  score1$`FSC Score          (Out of 3)`<- round(as.numeric(score1$`FSC Score          (Out of 3)`),digits = 2)
-  if(grepl("^\\s*$", job1)){
-    score1$`Context Score        (Out of 1)`<-NULL
-  }
-  if(grepl("^\\s*$", functional)){
-    score1$`Functional Score          (Out of 1)`<-NULL
-  }
-  if(grepl("^\\s*$", systems)){
-    score1$`Systems Score          (Out of 1)`<-NULL
-  }
-  if(grepl("^\\s*$", functional) & grepl("^\\s*$", systems) ){
-    score1$`FSC Score          (Out of 3)`<- NULL
-  }
-  if(grepl("^\\s*$", functional) & grepl("^\\s*$", systems)  & grepl("^\\s*$", job1)){
-    score1$`Cumulative Score          (Out of 5)`<- NULL
-  }
-  
-  if(nrow(score1)>0){
-    tokens <- tokens(as.character(new_requirement$Skills), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
-    tokens <- tokens_tolower(tokens)
-    tokens <- tokens_select(tokens, stp$TEXT, selection = "remove")
-    train.tokens.dfm <- dfm(tokens, tolower = FALSE)
-    tokens <- tokens_wordstem(tokens, language = "english")
-    tokens <- tokens_ngrams(tokens, n = 1)
-    
-    tokens1 <- tokens(as.character(candidates$TProfile), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
-    tokens1 <- tokens_tolower(tokens1)
-    tokens1 <- tokens_select(tokens1, stopwords(), selection = "remove")
-    tokens1 <- tokens_ngrams(tokens1, n = 1)
-    
-    skilltokens <- list()
-    aaa <- character(0)
-    for(i in 1:nrow(candidates)){
-      if(!identical(aaa,unlist(tokens1[i]))){
-        skilltokens[i] <- paste(tokens_select(tokens, unlist(as.list(tokens1[i])), selection = "remove"),collapse = ",")
-      }else{
-        skilltokens[i]<-"" 
-      }
-    }
-    
-    score3 <- data.frame(File = candidates$File_Name, Skills.not.present = unlist(skilltokens))
-    
-    
-    
-    score1 <- left_join(score1, score3, by = "File")
-  }
-  return(score1)
-}
 
 ##############################################Skill Vs Customer#########################################
 custskill1 <- function(c, d, e){
