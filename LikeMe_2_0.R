@@ -324,17 +324,19 @@ defin<-function (name){
 
 
 ##############################################Contextual Search################################
+#Function to search for resumes based on skills and job descriptions.
 likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, systems){    
   
   
   setwd("C:/HCL/LikeMe")
-  
+  #Loading packages for contextual search.
   library(dplyr)
   library(lubridate)
   library(stringr)
   library(caret)
   library(quanteda)
   
+  #loading the skill set data and the stopwords data.
   skills <- read.csv("skillClustering.csv", header = TRUE, stringsAsFactors = FALSE)
   stp <- read.csv("stopwords.csv", header = TRUE, stringsAsFactors = FALSE)
   
@@ -357,6 +359,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
     }
   }
   
+  #Candidate experience search preference.
   if(exp1 == "No Preference"){
     candidates <- candidates
     original <- original
@@ -365,7 +368,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
     original <- subset(original, original$experience == exp1)
   }
   
-  
+  #Search preference based on skill.
   if(sk.ill == "I have already entered the skills"){
     new_requirement <- data.frame(X = nrow(candidates)+1,File_Name = "",Mobile.Number = 9999999999,Email = "",Profile = job1, Education = "",Skills = skill1, TProfile = "")
     new_requirement$requirement <- paste(new_requirement$Skills, new_requirement$Profile)
@@ -415,6 +418,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   
   tokens <- tokens_ngrams(tokens, n = 1)
   
+  #Tokenizing the skills.
   skills.tokens <- tokens(skills$value, what = "word", remove_numbers = TRUE, remove_punct = TRUE)
   skills.tokens <- tokens_tolower(skills.tokens)
   skills.tokens <- tokens_select(skills.tokens, stp$TEXT, selection = "remove")
@@ -438,14 +442,15 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   
   tokens <- as.matrix(tokens.df)
   
+  #Creating the tokenized matrix.
   tokens <- t(tokens)
   
-  
+  #Scoring the candidate based on skill.
   library(lsa)
   start.time <- Sys.time()
   if(nrow(candidates)>1){
     
-    #Finding Cosine Similarity.
+    #Finding Cosine Similarity for skill scoring.
     cos <- cosine(tokens)
     cos <- as.data.frame(cos)
     score1 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
@@ -490,6 +495,8 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
     
     tokens.df <- apply(tokens.matrix, 1, term.frequency)
     tokens.idf <- apply(tokens.matrix, 2, inverse.doc.freq)
+    
+    #Creating a tf-idf matrix
     if(length(tokens.idf)>1){
       tokens.tfidf <-  apply(tokens.df, 2, tf.idf, idf = tokens.idf)
     }else{
@@ -503,10 +510,12 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
     tokens <- as.matrix(tokens.df)
     
     tokens <- t(tokens)
-    
+
+    #Scoring the candidate based on context.
     library(lsa)
     start.time <- Sys.time()
     if(nrow(candidates)>1){
+      #Finiding csine similarity
       cos <- cosine(tokens)
       cos <- as.data.frame(cos)
       score2 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
@@ -558,7 +567,9 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
     
     tokens <- t(tokens)
     
+    #Scoring the candidated based on functional and system requirements.
     if(nrow(candidates)>1){
+      #Finding Cosine Similarity
       cos <- cosine(tokens)
       cos <- as.data.frame(cos)
       score <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, score = cos$text1)
@@ -589,6 +600,7 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   score1 <- left_join(score1,functional_score,by = 'File')
   score1 <- left_join(score1,systems_score,by = 'File')
   
+  #Creating a scored table and sorting candidats based on their cumulative scores.
   score1$cscores <- score1$score.x+score1$score.y
   score1$cumulative <- score1$cumulative+score1$cscores
   score1 <- score1[order(score1$cumulative, decreasing = TRUE),]
@@ -1157,6 +1169,7 @@ forecaster <- function(skill.input, country){
           order<-order
         }
         
+        #Forecast using the auto.arima function
         ovr.forecast <- forecast(auto.arima(ovr.demandseries), h = 12)
         
         final.results <- data.frame(month = c("Month 1", "Month 2","Month 3"), 
@@ -1250,14 +1263,15 @@ forecaster <- function(skill.input, country){
         
         #Convert data to time series.
         
-        ovr.demandseries <- ts(ovrdemand.agg$demand, frequency = 52)
-        ext.demandseries <- ts(ext.agg$demand, frequency = 52)
-        int.demandseries <- ts(int.agg$demand, frequency = 52)
-        tot.demandseries <- ts(totful.agg$demand, frequency = 52)
+        ovr.demandseries <- tsclean(ts(ovrdemand.agg$demand, frequency = 52))
+        ext.demandseries <- tsclean(ts(ext.agg$demand, frequency = 52))
+        int.demandseries <- tsclean(ts(int.agg$demand, frequency = 52))
+        tot.demandseries <- tsclean(ts(totful.agg$demand, frequency = 52))
         
         order <- read.csv("order.csv")
         order <- subset(order, order$skill == as.character(skills.list))
         
+        #Forecast using auto.arima
         ovr.forecast <- forecast(auto.arima(ovr.demandseries), h = 12)
         
        
@@ -1340,6 +1354,7 @@ forecaster <- function(skill.input, country){
       ovrdemand.agg <- merge(template, ovrdemand.agg, all = TRUE)
       ovrdemand.agg$demand[is.na(ovrdemand.agg$demand)] <- 0
       
+      #Logic to create forcast for the next quarter based on the dates in the data.
       if(month(max(master.demand$date)) %in% c(1,2,3)){
         n <- length(unique(master.demand$year))-1
         n <- n*52
@@ -1973,10 +1988,11 @@ clue<- function(skillword){
   
 }
 
-#Creation of UI 
+#Function to create the UI using the Shiny Dashboard Template.
 
 ui <- dashboardPage(#skin = "blue",
   
+  #Header for the App, The sidebar and the menu items.
   dashboardHeader(title = "Recruitment Analytics"),
   dashboardSidebar(
     sidebarMenu(
@@ -1996,6 +2012,7 @@ ui <- dashboardPage(#skin = "blue",
       
     )
   ),
+  #Dashboard Body with all the UI elements for different modules.
   dashboardBody(tags$head(tags$style(HTML('.content{
                                           background-color: white;
                                           } 
@@ -2315,6 +2332,7 @@ ui <- dashboardPage(#skin = "blue",
 
 
 #############################Fulfillment Percentage##############################
+#Function to generate the data for the fulfillment graph based on customer.
 fulfillment.customer <- function(skill){
   setwd("C:/HCL/LikeMe/Demand")
   master <- read.csv("dump.csv", stringsAsFactors = FALSE)
@@ -2343,6 +2361,8 @@ fulfillment.customer <- function(skill){
   master.skill.initial.customer <- master.skill.initial.customer[order(master.skill.initial.customer$x,decreasing = TRUE),]
   return(master.skill.initial.customer)                                                                                                          
 }
+
+#Function to generate the data for the fulfillment graphs based on location.
 fulfillment.location <- function(skill){
   setwd("C:/HCL/LikeMe/Demand")
   master <- read.csv("dump.csv", stringsAsFactors = FALSE)
@@ -2378,6 +2398,7 @@ fulfillment.location <- function(skill){
 }
 
 ############################################POPULARITY#######################################################
+#Function to created the popularity dashboard.
 popularity <- function(country,cust, skillbucket){
   cons <- dem
   colnames(cons)[which(names(cons) == "C..")] <- "C++"
@@ -2481,7 +2502,7 @@ popularity <- function(country,cust, skillbucket){
   return(list(weeks,Gainers.Losers, Top10.gainers, Top10.losers))
 }
 
-
+#Function for creating a local server.
 server <- function(input, output, session) {
   
   
@@ -2539,7 +2560,8 @@ server <- function(input, output, session) {
   output$score <- DT::renderDataTable({
     data()
   })
-  
+ 
+  #Creating reactive functions for various buttons included in the UI. 
   data1 <- eventReactive(input$cust, {forecaster(input$forecast.ss[1],input$custloc[1])})
   data2 <- eventReactive(input$cust, {maps(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
   data3 <- eventReactive(input$cust, {maptable(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
@@ -2556,7 +2578,7 @@ server <- function(input, output, session) {
   data.combforecast <- eventReactive(input$cust,{combopred(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
   data.custforecast <- eventReactive(input$cust,{cust.forecast(input$forecast.ss[1],input$forecast.qq[1],input$forecast.yy[1],input$custloc[1])})
   
-
+  #Functions to generate tables and graphs.
   output$custforecast <- DT::renderDataTable({
     data.custforecast()
     
@@ -2620,6 +2642,7 @@ server <- function(input, output, session) {
     )
   })
   
+  #Generating the graphs for the popularity statistics.
   output$pop.plot <- renderPlotly({
     External1 <- data.frame(data.popularity()[1])
     External1$year.quarter <- factor(External1$year.quarter, levels = External1[["year.quarter"]])
@@ -2651,7 +2674,7 @@ server <- function(input, output, session) {
     
   })
   
-  
+  #Plot to display the statistics of demand on the US map.
   output$plot <- renderPlotly({
     g <- list(
       scope = 'usa',
@@ -2727,6 +2750,7 @@ server <- function(input, output, session) {
     )
   })
   
+  #Displays a with the Unfulfilled Overdue percentage.
   output$od <- renderValueBox({
     valueBox(
       paste0(data8()$od.per, "%"), "Unfulfilled Overdue", icon = icon("list"),
@@ -2742,6 +2766,7 @@ server <- function(input, output, session) {
     )
   })
   
+  #Displays a box with the revenue.
   output$revenue <- renderValueBox({
     valueBox(
       paste0("$",data1()[3,]$Demand*65*2080), paste0(data1()$quarter[nrow(data1())],"-",data1()$year[nrow(data1())],"Revenue"), icon = icon("dollar"),
@@ -2749,6 +2774,7 @@ server <- function(input, output, session) {
     )
   })
   
+  #Displays the plot the demand for top10 customers.
   output$custplot <- renderPlotly(
     {
       plot_ly(data7(), x = ~Customer, y = ~Demand,  type = 'scatter',color = ~Segement,
