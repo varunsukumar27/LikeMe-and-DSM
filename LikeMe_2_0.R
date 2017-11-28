@@ -159,7 +159,7 @@ list_location<- function (customer){
 
 #Function for Skill radar computes distance by Pearson corelation and makes out the radar 
 
-newman<-function(input, n, skillbucket, subarea,customer,raio){
+  newman<-function(input, n, skillbucket, subarea,customer,raio){
   
   # Only if Skill is  mentioned by the user compute the closest skills 
   if (input!=""){
@@ -405,7 +405,9 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   candidates$TProfile[1] <- skill1
   
   #tokenisation of the profiles
-  
+  if(grepl("^\\s*$", new_requirement$Skills)){
+    score1 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, Score = rep(0,nrow(candidates)))
+  }else{
   tokens <- tokens(as.character(new_requirement$Skills), what = "word", remove_numbers = TRUE, remove_punct = TRUE)
   tokens <- tokens_tolower(tokens)
   
@@ -469,7 +471,8 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   total.time
   score1$Score[is.nan(score1$Score)] <- 0
   score1 <- score1[order(score1$Email, decreasing = TRUE),]
-  
+  }
+  #Check whether job description is available or not.
   if(grepl("^\\s*$", job1)){
     score2 <- data.frame(File = candidates$File_Name,Mobile.Number = candidates$Mobile.Number,Email = candidates$Email, Score = rep(0,nrow(candidates)))
   }else{
@@ -608,12 +611,21 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
   score1 <- subset(score1, score1$Score>0.5)
   score1$Mob <- NULL
   score1$Skill<-NULL
+  if(ncol(score1)==9){
   colnames(score1) <- c("File","Mobile Number","Email","Skill Score         (Out of 1)", 
-                        "Skill","em","Context Score        (Out of 1)",
+                        "Context Score        (Out of 1)",
                         "Cumulative Score          (Out of 5)",
                         "Functional Score          (Out of 1)",
                         "Systems Score          (Out of 1)",
                         "FSC Score          (Out of 3)")
+  }else{
+    colnames(score1) <- c("File","Mobile Number","Email","Skill Score         (Out of 1)", 
+                          "Skill","em","Context Score        (Out of 1)",
+                          "Cumulative Score          (Out of 5)",
+                          "Functional Score          (Out of 1)",
+                          "Systems Score          (Out of 1)",
+                          "FSC Score          (Out of 3)")
+  }
   score1$Skill<-NULL
   score1$em<-NULL
   score1 <- score1[1:5,]
@@ -668,7 +680,11 @@ likeme <- function(skill1, job1, exp1, stype1, sk.ill, num1,clack, functional, s
     
     score1 <- left_join(score1, score3, by = "File")
   }
-  return(score1)
+  if(!is.na(score1[1,1])){
+    return(score1)
+  }else{
+    return(data.frame(Error = "No Skill or job Description entered."))
+  }
 }
 
 ######################################Like me - Job board search#################################################
@@ -912,7 +928,7 @@ combopred <- function(a,b,c, country){
   grid <- expand.grid(Total.location, Total.customer)
   colnames(grid) <- c("Location","Customer")
   
-  combination.forecasting<-function(Locat,Custo){
+  combination.forecasting <- function(Locat,Custo){
     demand <- dem
     dates <- dem
     
@@ -2231,7 +2247,7 @@ ui <- dashboardPage(#skin = "blue",
                         plotlyOutput("custplot"))
                     ),
                     fluidRow(
-                      box(title = "Demand in the United States.",
+                      box(title = "Demand Heat Map",
                           status = "danger",
                           solidHeader = TRUE,
                           collapsible = TRUE,
@@ -2399,7 +2415,7 @@ fulfillment.location <- function(skill){
 
 ############################################POPULARITY#######################################################
 #Function to created the popularity dashboard.
-popularity <- function(country,cust, skillbucket){
+popularity <- function(ctry,cust, skillbucket){
   cons <- dem
   colnames(cons)[which(names(cons) == "C..")] <- "C++"
   colnames(cons)[which(names(cons) == "C.")] <- "C#"
@@ -2408,12 +2424,12 @@ popularity <- function(country,cust, skillbucket){
   cons[,137:2972] <- as.data.frame(lapply(cons[,137:2972], function(x){replace(x, x>1,1)}))
   cons[,137:2972] <- cons[,137:2972]*cons$InitialDemand
   
-  cons <- cons %>% filter(cons$country==country)
+  cons <- subset(cons,cons$country==ctry)
   cons <- cons %>% filter(cons$Customer==cust)
   cons <- cons %>% filter(cons$Skill.Bucket==skillbucket)
   
   max.year <- cons %>% filter(cons$year == max(cons$year))
-  min.year <- cons %>% filter(cons$year == max(cons$year))
+  min.year <- cons %>% filter(cons$year == min(cons$year))
   
   cq <- quarter(Sys.Date())
   if(cq==1){
@@ -2499,7 +2515,19 @@ popularity <- function(country,cust, skillbucket){
   if(nrow(Top10.losers)>0){
     Top10.losers$PercentageChange <- paste(Top10.losers$PercentageChange,"%")
   }
+  
+  Top10.gainers <- subset(Top10.gainers, Top10.gainers$PercentageChange!="Inf %")
+  Top10.gainers <- subset(Top10.gainers, Top10.gainers$PercentageChange!="-Inf %")
+  
+  Top10.losers <- subset(Top10.losers, Top10.losers$PercentageChange!="Inf %") 
+  Top10.losers <- subset(Top10.losers, Top10.losers$PercentageChange!="-Inf %")
+  
+  if(!year(Sys.Date())>max(cons$year)){
   return(list(weeks,Gainers.Losers, Top10.gainers, Top10.losers))
+  }else{
+    weeks = weeks[1:4,]
+    return(list(weeks,Gainers.Losers, Top10.gainers, Top10.losers))
+  }
 }
 
 #Function for creating a local server.
